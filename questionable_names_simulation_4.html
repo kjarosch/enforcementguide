@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Apply the Change — Questionable Names Simulation</title>
+<style>
+  :root{
+    --ink:#1a2230; --muted:#5a6b80; --line:#d4dae3; --line-soft:#e8ecf2;
+    --paper:#ffffff; --shell:#eef1f5;
+    --tt-blue:#0074AD; --tt-blue-d:#005199;
+    --warn-bg:#FFEFF0; --warn-line:#FFB080; --warn-text:#790D10;
+    --eg-orange:#FEBE14; --eg-row:#ece6f6; --eg-hold-bg:#FBE8B3; --eg-hold-tx:#a77005; --eg-none-bg:#FDF7E7;
+    --ok:#2DB783; --ok-d:#168558; --ok-bg:#E1FDF3;
+    --field-label:#42526b; --crit:#B22D31;
+    --radius:8px;
+    --mono:"SF Mono",ui-monospace,"Cascadia Code",Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--shell); font-family:var(--sans); color:var(--ink); -webkit-font-smoothing:antialiased; padding:1.5rem;}
+  .frame{max-width:1080px; margin:0 auto;}
+
+  .lh{margin-bottom:1rem;}
+  .lh .eyebrow{font-size:.82rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--tt-blue-d);}
+  .lh h1{font-size:1.7rem; font-weight:700; margin:.25rem 0 .5rem;}
+  .lh p{font-size:1.05rem; line-height:1.55; color:var(--muted); margin:0; max-width:780px;}
+
+  .steps{display:flex; gap:6px; margin:1rem 0 1.25rem; flex-wrap:wrap;}
+  .steps .s{flex:1; min-width:120px; border:1px solid var(--line); border-radius:6px; background:var(--paper); padding:8px 12px; font-size:.82rem; color:var(--muted); display:flex; align-items:center; gap:8px;}
+  .steps .s .n{width:20px; height:20px; border-radius:50%; background:var(--line); color:#fff; display:flex; align-items:center; justify-content:center; font-size:.72rem; font-weight:700; flex:none;}
+  .steps .s.active{border-color:var(--tt-blue); color:var(--ink); font-weight:600;}
+  .steps .s.active .n{background:var(--tt-blue);}
+  .steps .s.done .n{background:var(--ok);}
+
+  .browser{background:var(--paper); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; box-shadow:0 2px 14px rgba(20,40,70,.07);}
+  .tabbar{display:flex; align-items:center; gap:8px; background:#dfe4ea; padding:8px 12px 0;}
+  .tab{background:#eef1f5; border-radius:8px 8px 0 0; padding:8px 14px; font-size:.82rem; color:var(--muted); display:flex; align-items:center; gap:8px; border:1px solid transparent; border-bottom:none; max-width:240px; cursor:pointer; transition:background .1s, box-shadow .1s; position:relative;}
+  .tab:not(.active):hover{background:#f6f8fa; color:var(--tt-blue-d); box-shadow:inset 0 -2px 0 var(--tt-blue);}
+  .tab:not(.active)::after{content:"\21A9"; font-size:.8rem; opacity:0; margin-left:2px; transition:opacity .1s; color:var(--tt-blue);}
+  .tab:not(.active):hover::after{opacity:.8;}
+  .tab.pulse:not(.active){animation:tabpulse 1.6s ease 2;}
+  @keyframes tabpulse{0%,100%{box-shadow:inset 0 -2px 0 transparent;} 50%{box-shadow:inset 0 -3px 0 var(--tt-blue);}}
+
+  .tabhint{display:flex; align-items:center; gap:8px; font-size:.9rem; color:var(--tt-blue-d); background:#E6F1FD; border:1px solid #96C2FF; border-radius:6px; padding:8px 12px; margin-bottom:10px; transition:opacity .3s;}
+  .tabhint.gone{opacity:0; height:0; padding:0; margin:0; border:0; overflow:hidden;}
+  .tabhint .x{margin-left:auto; cursor:pointer; font-weight:700; opacity:.6;}
+  .tabhint .x:hover{opacity:1;}
+  .tab.active{background:var(--paper); color:var(--ink); font-weight:600;}
+  .tab .fav{width:12px; height:12px; border-radius:3px; flex:none;}
+  .tab.cmr .fav{background:var(--tt-blue);} .tab.eg .fav{background:var(--eg-orange);} .tab.admin .fav{background:#1a2230;} .tab.sf .fav{background:#00A1E0;}
+  .urlbar{background:var(--paper); border-bottom:1px solid var(--line); padding:8px 14px; font-family:var(--mono); font-size:.8rem; color:var(--muted); display:flex; align-items:center; gap:10px;}
+  .urlbar .lock{color:var(--ok-d);}
+  .view{min-height:430px;}
+  .admwarn{background:var(--warn-bg); border-bottom:1px solid var(--warn-line); color:var(--warn-text); font-size:.8rem; text-align:center; padding:6px 12px; font-weight:600;}
+  .pad{padding:20px 26px;}
+
+  .req-title{font-size:1.3rem; font-weight:700; color:var(--tt-blue-d); margin:0 0 2px;}
+  .req-sub{font-size:.9rem; color:var(--muted); margin:0 0 16px;}
+  table.req{width:100%; border-collapse:collapse; font-size:.92rem; margin-bottom:6px;}
+  table.req td{padding:7px 10px; vertical-align:top; border-bottom:1px solid var(--line-soft);}
+  table.req td.k{width:200px; text-align:right; color:var(--field-label); font-weight:600;}
+  .msgs{margin-top:6px;}
+  .msg{border:1px solid var(--line-soft); border-radius:8px; padding:11px 14px; margin-bottom:10px; font-size:.95rem; line-height:1.5; background:#fafbfc;}
+  .msg .who{font-size:.78rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin-bottom:4px;}
+  .flag{background:#FBE8B3; padding:0 3px; border-radius:3px;}
+
+  .coach{margin:16px 26px 0; background:#E6F1FD; border:1px solid #96C2FF; border-radius:var(--radius); padding:14px 16px; font-size:.95rem; line-height:1.5; color:#063a63;}
+  .coach b{color:var(--tt-blue-d);}
+
+  .egbar{background:#E1FDF3; border-bottom:1px solid var(--line); font-size:.82rem; color:var(--ok-d); padding:6px 14px;}
+  .egwrap{padding:18px 22px; overflow-x:auto;}
+  table.eg{border-collapse:collapse; font-size:.85rem; width:100%; min-width:820px;}
+  table.eg th{background:#6b6b6b; color:#fff; font-weight:600; padding:8px 10px; text-align:left; border:1px solid #cfd5dd; font-size:.8rem;}
+  table.eg td{padding:7px 10px; border:1px solid #cfd5dd; vertical-align:top;}
+  .eg-titlecell{background:var(--eg-row); font-weight:700; font-size:1rem; width:150px;}
+  .eg-usertype{background:var(--eg-row); width:90px; text-align:center; vertical-align:middle;}
+  .eg-pickkey{font-weight:700; width:90px;}
+  .eg-tier{background:var(--eg-row); text-align:center; font-weight:700; font-size:1.05rem; vertical-align:middle; width:48px;}
+  .eg-none{background:var(--eg-none-bg); color:var(--eg-hold-tx); font-weight:700; text-align:center;}
+  .eg-hold{background:var(--eg-hold-bg); color:var(--eg-hold-tx); font-weight:700; text-align:center;}
+  .eg-no{background:#C6F7DA; color:var(--ok-d); font-weight:700; text-align:center;}
+  tr.eg-target td{outline:2px solid var(--tt-blue); outline-offset:-2px;}
+
+  .form-pad{padding:22px 26px;}
+  .form-pad h3{margin:0 0 4px; font-size:1.15rem;}
+  .form-pad .sub{font-size:.9rem; color:var(--muted); margin:0 0 18px;}
+  .wt-meta{display:flex; gap:24px; flex-wrap:wrap; background:#f4f6f9; border:1px solid var(--line); border-radius:8px; padding:12px 16px; margin-bottom:20px; font-size:.85rem;}
+  .wt-meta div span{display:block; color:var(--muted); font-size:.75rem; text-transform:uppercase; letter-spacing:.04em;}
+  .wt-meta div b{font-size:.95rem;}
+  .fgroup{margin-bottom:16px; max-width:580px;}
+  .fgroup label{display:block; font-size:.85rem; font-weight:600; color:var(--field-label); margin-bottom:5px;}
+  .req-star{color:var(--crit);}
+  .fgroup select, .fgroup input, .fgroup textarea{width:100%; font-family:var(--sans); font-size:.95rem; padding:9px 11px; border:1px solid var(--line); border-radius:6px; background:var(--paper); color:var(--ink);}
+  .fgroup select:focus, .fgroup textarea:focus{outline:2px solid var(--tt-blue); border-color:var(--tt-blue);}
+  .fgroup.bad select, .fgroup.bad textarea{border-color:var(--crit);}
+  .fhint{font-size:.8rem; color:var(--muted); margin-top:4px;}
+
+  .actions{display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:8px;}
+  button{font-family:var(--sans); font-size:.95rem; font-weight:600; border-radius:6px; cursor:pointer; border:1px solid transparent; padding:10px 20px; transition:transform .08s,background .12s;}
+  button:active{transform:scale(.98);}
+  button:disabled{opacity:.45; cursor:not-allowed;}
+  .btn-primary{background:var(--tt-blue); color:#fff;}
+  .btn-primary:hover:not(:disabled){background:var(--tt-blue-d);}
+  .btn-ghost{background:var(--paper); color:var(--tt-blue-d); border-color:var(--tt-blue);}
+  .btn-eg{background:var(--eg-orange); color:#5a4500;}
+  .btn-sf{background:#00A1E0; color:#fff;}
+
+  .fb{margin-top:16px; border-radius:var(--radius); padding:14px 16px; font-size:.95rem; line-height:1.5; display:none;}
+  .fb.show{display:block; animation:fade .25s ease;}
+  .fb.ok{background:var(--ok-bg); border:1px solid var(--ok); color:var(--ok-d);}
+  .fb.no{background:var(--warn-bg); border:1px solid var(--warn-line); color:var(--warn-text);}
+  @keyframes fade{from{opacity:0; transform:translateY(5px);} to{opacity:1; transform:none;}}
+
+  /* syndication-style decision buttons (reused look for the message-review decision) */
+  .decide{display:flex; flex-direction:column; gap:10px; max-width:420px; margin-top:4px;}
+  .decide button{width:100%; text-align:left; border:1px solid var(--line); background:var(--paper); color:var(--ink); font-weight:600; padding:13px 16px;}
+  .decide button:hover{border-color:var(--tt-blue);}
+  .decide button.picked-ok{border-color:var(--ok); background:var(--ok-bg);}
+  .decide button.picked-no{border-color:var(--crit); background:var(--warn-bg);}
+
+  .notepick{display:flex; flex-direction:column; gap:8px;}
+  .notepick button{width:100%; text-align:left; font-family:var(--mono); font-size:.9rem; font-weight:500; border:1px solid var(--line); background:var(--paper); color:var(--ink); padding:11px 14px; border-radius:6px;}
+  .notepick button:hover{border-color:var(--tt-blue);}
+  .notepick button.sel{border-color:var(--tt-blue); background:#E6F1FD; font-weight:600;}
+  .note-preview{font-family:var(--mono); font-size:.88rem; color:var(--ok-d); background:var(--ok-bg); border-radius:6px; padding:10px 12px; margin:12px 0 0; display:none;}
+  .note-preview.show{display:block;}
+
+  .mc{background:var(--paper); border:1px solid var(--line); border-radius:var(--radius); padding:22px 26px; margin-top:18px;}
+  .mc h3{margin:0 0 14px; font-size:1.1rem;}
+  .opt{display:flex; gap:12px; align-items:flex-start; border:1px solid var(--line); border-radius:8px; padding:13px 15px; margin-bottom:10px; cursor:pointer; transition:border-color .12s,background .12s; font-size:.95rem; line-height:1.45;}
+  .opt:hover{border-color:var(--tt-blue);}
+  .opt .radio{width:18px; height:18px; border-radius:50%; border:2px solid var(--line); flex:none; margin-top:2px;}
+  .opt.correct{border-color:var(--ok); background:var(--ok-bg);}
+  .opt.wrong{border-color:var(--crit); background:var(--warn-bg);}
+  .opt.locked{cursor:default; pointer-events:none;}
+
+  .stage{display:none;}
+  .stage.active{display:block;}
+
+  .recap-head{display:flex; gap:14px; align-items:flex-start; margin-bottom:20px;}
+  .recap-check{flex:none; width:40px; height:40px; border-radius:50%; background:var(--ok); color:#fff; display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:700;}
+  .recap-grid{display:flex; flex-direction:column; gap:0; border:1px solid var(--line); border-radius:var(--radius); overflow:hidden;}
+  .recap-row{display:grid; grid-template-columns:150px 1fr; gap:0;}
+  .recap-row:not(:last-child){border-bottom:1px solid var(--line-soft);}
+  .recap-k{background:#f4f6f9; padding:14px 16px; font-weight:700; font-size:.9rem; color:var(--field-label);}
+  .recap-v{padding:14px 16px; font-size:1rem; line-height:1.5;}
+  @media (max-width:560px){ .recap-row{grid-template-columns:1fr;} .recap-k{border-bottom:1px solid var(--line-soft);} }
+  .nav-foot{display:flex; justify-content:space-between; align-items:center; margin-top:14px;}
+  .nav-foot .progress-label{font-size:.85rem; color:var(--muted);}
+  .nav-foot .right{display:flex; gap:10px;}
+
+  /* --- syndication decision buttons --- */
+  .syndform{max-width:460px; border:1px solid var(--tt-blue); border-radius:var(--radius); padding:16px 18px; margin-top:14px; background:#F7F4FC;}
+  .syndform.hidden{display:none;}
+  /* --- SF shuttle (Available / Chosen) multi-select --- */
+  .shuttle{display:grid; grid-template-columns:1fr 44px 1fr; gap:10px; align-items:stretch; max-width:580px;}
+  .shuttle .col{border:1px solid var(--line); border-radius:6px; background:var(--paper); min-height:132px; padding:4px;}
+  .shuttle .col h5{margin:0; font-size:.74rem; text-transform:uppercase; letter-spacing:.04em; color:var(--field-label); padding:6px 8px 4px;}
+  .shuttle .item{font-size:.9rem; padding:7px 9px; border-radius:5px; cursor:pointer; border:1px solid transparent;}
+  .shuttle .item:hover{background:#E6F1FD; border-color:#96C2FF;}
+  .shuttle .item.sel{background:#E6F1FD; border-color:var(--tt-blue); font-weight:600;}
+  .shuttle .mid{display:flex; flex-direction:column; gap:8px; justify-content:center; align-items:center;}
+  .shuttle .mid button{padding:6px 0; width:38px; font-size:1rem; border:1px solid var(--line); background:var(--paper); color:var(--tt-blue-d); border-radius:6px;}
+  .shuttle .mid button:hover:not(:disabled){border-color:var(--tt-blue); background:#E6F1FD;}
+  .shuttle .empty{font-size:.82rem; color:var(--muted); padding:8px 9px; font-style:italic;}
+
+  /* --- legacy syndication portal (matches the real admin page) --- */
+  .legacy{padding:18px 22px; font-size:.9rem;}
+  .legacy h4{font-size:1rem; margin:18px 0 7px; font-weight:700;}
+  .legacy h4:first-child{margin-top:0;}
+  table.sig{border-collapse:collapse; width:100%; margin-bottom:4px; font-size:.84rem;}
+  table.sig th{border:1px solid #9aa6b4; background:var(--paper); text-align:left; padding:4px 7px; font-weight:700; color:var(--ink);}
+  table.sig td{border:1px solid #9aa6b4; padding:5px 7px; height:24px; color:var(--ink);}
+  .legacy .mh{margin:4px 0; line-height:1.5;}
+  .legacy .mh .pos{color:var(--tt-blue-d); font-weight:700;}
+  .legacy .mh .who{color:#8a3ffc; font-weight:700;}
+  .legacy .mh a{color:var(--tt-blue-d); font-weight:600;}
+  table.linked{border-collapse:collapse; width:100%; font-size:.84rem; margin-bottom:2px;}
+  table.linked th{border:1px solid #9aa6b4; background:var(--paper); padding:4px 7px; text-align:left; font-weight:700;}
+  .legacy .twocol{display:grid; grid-template-columns:1fr 1fr; border:1px solid #9aa6b4; border-top:none;}
+  .legacy .twocol .h{text-align:center; font-weight:700; color:var(--tt-blue-d); padding:5px; border-bottom:1px solid #9aa6b4;}
+  .legacy .twocol .h:first-child{border-right:1px solid #9aa6b4;}
+  .legacy .twocol .c{padding:6px 8px; color:var(--muted);}
+  .legacy .twocol .c:first-child{border-right:1px solid #9aa6b4;}
+
+  .synd-q{font-size:1.05rem; font-weight:700; margin:22px 0 12px;}
+  .synd-wrap{display:grid; grid-template-columns:260px 1fr; gap:24px; align-items:start;}
+  .synd-btns{display:flex; flex-direction:column; gap:12px;}
+  .synd-btns button{width:100%; text-align:center; border:1px solid #9aa6b4; background:#eef1f5; font-weight:700; padding:11px 14px; border-radius:3px; font-size:.92rem;}
+  .synd-btns button[data-v="syndicate"]{color:var(--ok-d);}
+  .synd-btns button[data-v="ghost"]{color:var(--tt-blue-d);}
+  .synd-btns button[data-v="delete"]{color:var(--crit);}
+  .synd-btns button:hover{border-color:var(--ink);}
+  .synd-btns button.picked-ok{border-color:var(--ok); background:var(--ok-bg);}
+  .synd-btns button.picked-no{border-color:var(--crit); background:var(--warn-bg);}
+  .synd-sub{border:1px solid var(--crit); border-radius:4px; padding:16px 18px; max-width:380px;}
+  .synd-sub.hidden{display:none;}
+  .synd-sub .chosen-pill{color:var(--crit); font-weight:700; border:1px solid #9aa6b4; border-radius:3px; padding:8px 12px; margin-bottom:14px; background:var(--paper); font-size:.92rem;}
+  .synd-sub label{display:block; text-align:center; font-weight:700; font-size:.9rem; margin-bottom:6px;}
+  .synd-sub select, .synd-sub input{width:100%; font-family:var(--sans); font-size:.92rem; padding:8px 10px; border:1px solid #9aa6b4; border-radius:3px; margin-bottom:14px; background:var(--paper);}
+  .synd-sub select.bad, .synd-sub input.bad{border-color:var(--crit); outline:1px solid var(--crit);}
+  .synd-sub .submit-row{text-align:center;}
+  .synd-sub .submit-row button{width:100%;}
+</style>
+</head><body>
+<div class="frame">
+
+  <div class="lh">
+    <span class="eyebrow">Apply the Change &middot; Simulation</span>
+    <h1>Work the case: a questionable name in Contact Verification</h1>
+    <p>You're verifying a syndicated request in the CV queue. The customer's registered name isn't a real name &mdash; it's their email address.</p>
+    <p>Read the case, look the violation up in the Enforcement Guide, then take the action the EG calls for: delete the request and log the outcome.</p>
+    <p style="font-size:.92rem; margin-top:.4rem;"><b>Note:</b> Names that are email addresses, social handles, or URLs &mdash; and names containing &ldquo;XXX&rdquo; &mdash; all now fall under <b>Questionable Names</b>.</p>
+  </div>
+
+  <div class="tabhint" id="tabHint">
+    <span>&#128161;</span>
+    <span>Tip: the browser tabs are clickable &mdash; jump back to the <b>case</b> or the <b>Enforcement Guide</b> anytime, no need to step backward.</span>
+    <span class="x" onclick="dismissHint()" title="Dismiss">&times;</span>
+  </div>
+
+  <div class="steps" id="tracker">
+    <div class="s active"><span class="n">1</span>Read the case</div>
+    <div class="s"><span class="n">2</span>Find it in the EG</div>
+    <div class="s"><span class="n">3</span>Delete the request</div>
+    <div class="s"><span class="n">4</span>Log it in Salesforce</div>
+  </div>
+
+  <!-- STAGE 1: CV CASE -->
+  <div class="stage active" id="stage1">
+    <div class="browser">
+      <div class="tabbar">
+        <div class="tab cmr active"><span class="fav"></span>Syndication Portal</div>
+        <div class="tab eg"><span class="fav"></span>Enforcement Guide</div>
+        <div class="tab admin"><span class="fav" style="background:#1a2230;"></span>Syndication &mdash; Decision</div>
+        <div class="tab sf"><span class="fav"></span>Salesforce &mdash; Work Ticket</div>
+      </div>
+      <div class="urlbar"><span class="lock">&#128274;</span>thumbtack.com/admin/requests/syndication/portal</div>
+      <div class="admwarn">PRACTICE ENVIRONMENT &mdash; fictional case, no production data</div>
+      <div class="view">
+        <div class="pad">
+          <p class="req-title">Above Ground Pool Installation (PRACTICE-660318) | Customer: mike.dawson84@zentmail.net</p>
+          <p class="req-sub">Contact Verification &middot; Routing: Contact Verification &middot; Status: New</p>
+          <table class="req">
+            <tr><td class="k">Registered name</td><td><span class="flag">mike.dawson84@zentmail.net</span> <span class="flag">mike.dawson84@zentmail.net</span></td></tr>
+            <tr><td class="k">Request category</td><td>Above Ground Pool Installation</td></tr>
+            <tr><td class="k">Zip code</td><td>27616 &middot; Raleigh, NC</td></tr>
+            <tr><td class="k">Email address</td><td>mike.dawson84@zentmail.net</td></tr>
+            <tr><td class="k">Email verified</td><td>Yes</td></tr>
+          </table>
+          <div class="msgs">
+            <div class="msg">
+              <div class="who">Customer message 1</div>
+              Sounds good! What's next?
+            </div>
+            <div class="msg">
+              <div class="who">Customer message 2</div>
+              I'm looking for someone who can replace a liner in my above ground pool &mdash; do you do that?
+            </div>
+          </div>
+        </div>
+        <div class="coach">
+          <b>What stands out?</b> The request and messages look like a normal job. But look at the <b>registered name</b>: it's the customer's <b>email address</b> (<b>mike.dawson84@zentmail.net</b>), not a real first and last name. A name that's an email address, handle, or URL is a <b>Questionable Name</b>. Check the EG for the exact action.
+        </div>
+      </div>
+    </div>
+    <div class="nav-foot">
+      <span class="progress-label">Step 1 of 4</span>
+      <button class="btn-eg" onclick="go(2)">Open the Enforcement Guide &rarr;</button>
+    </div>
+  </div>
+
+  <!-- STAGE 2: ENFORCEMENT GUIDE (CV tab) -->
+  <div class="stage" id="stage2">
+    <div class="browser">
+      <div class="tabbar">
+        <div class="tab cmr"><span class="fav"></span>Syndication Portal</div>
+        <div class="tab eg active"><span class="fav"></span>Enforcement Guide</div>
+        <div class="tab admin"><span class="fav" style="background:#1a2230;"></span>Syndication &mdash; Decision</div>
+        <div class="tab sf"><span class="fav"></span>Salesforce &mdash; Work Ticket</div>
+      </div>
+      <div class="urlbar"><span class="lock">&#128274;</span>docs.google.com/spreadsheets &middot; Enforcement Guide &middot; <b>CV</b> tab</div>
+      <div class="egbar">"File sensitivity" label applied &mdash; set to "Internal" automatically</div>
+      <div class="view">
+        <div class="egwrap">
+          <table class="eg">
+            <tr>
+              <th>Title</th><th>User Type</th><th colspan="2">Picklist</th><th>Required Comments</th><th>Tier</th>
+              <th>Syndicate</th><th>Admin Action</th><th>Blocklist</th><th>Escalation</th>
+            </tr>
+            <tr class="eg-target">
+              <td class="eg-titlecell" rowspan="4">Questionable Names</td>
+              <td class="eg-usertype" rowspan="4">Customer</td>
+              <td class="eg-pickkey">SYND:</td><td>Questionable Name</td>
+              <td rowspan="4">WT #, Note name (unless sexual or inappropriate)</td>
+              <td class="eg-tier" rowspan="4">1</td>
+              <td class="eg-hold" rowspan="4">Delete<br>Manual</td>
+              <td class="eg-none" rowspan="4">None</td>
+              <td class="eg-no" rowspan="4">No</td>
+              <td class="eg-no" rowspan="4">No</td>
+            </tr>
+            <tr class="eg-target"><td class="eg-pickkey">TACK:</td><td>Confirmed Violation | TOS Violation | Questionable Name</td></tr>
+            <tr class="eg-target"><td class="eg-pickkey">ADMIN:</td><td>N/A</td></tr>
+            <tr class="eg-target"><td class="eg-pickkey">BLIST:</td><td>N/A</td></tr>
+            <tr>
+              <td class="eg-titlecell" rowspan="2">Competitor Contact Abuse</td>
+              <td class="eg-usertype" rowspan="2">Customer</td>
+              <td class="eg-pickkey">SYND:</td><td>CCA</td>
+              <td rowspan="2">WT #, Describe violation</td>
+              <td class="eg-tier" rowspan="2">1</td>
+              <td class="eg-hold" rowspan="2">Delete<br>Manual</td>
+              <td class="eg-none" rowspan="2">None</td>
+              <td class="eg-no" rowspan="2">No</td>
+              <td class="eg-no" rowspan="2">No</td>
+            </tr>
+            <tr><td class="eg-pickkey">TACK:</td><td>Confirmed Violation | TOS Violation | Competitor Contact Abuse</td></tr>
+          </table>
+        </div>
+        <div class="coach">
+          <b>Read the right row.</b> A name that's an email address is a <b>Questionable Names</b> violation (outlined): <b>Tier 1</b>, Syndicate action <b>Delete</b> (manual), Admin Action <b>None</b>, <b>No</b> blocklist, <b>No</b> escalation. The required comment is <b>"WT #, Note name (unless sexual or inappropriate)."</b> The account is <b>not</b> deleted and <b>not</b> blocklisted &mdash; only the request is deleted. Now take the action.
+        </div>
+      </div>
+    </div>
+    <div class="nav-foot">
+      <span class="progress-label">Step 2 of 4</span>
+      <div class="right">
+        <button class="btn-ghost" onclick="go(1)">&larr; Back to case</button>
+        <button class="btn-primary" onclick="go(3)">Go to the syndication decision &rarr;</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STAGE 3: SYNDICATION DECISION -->
+  <div class="stage" id="stage3">
+    <div class="browser">
+      <div class="tabbar">
+        <div class="tab cmr"><span class="fav"></span>Syndication Portal</div>
+        <div class="tab eg"><span class="fav"></span>Enforcement Guide</div>
+        <div class="tab admin active"><span class="fav" style="background:#1a2230;"></span>Syndication &mdash; Decision</div>
+        <div class="tab sf"><span class="fav"></span>Salesforce &mdash; Work Ticket</div>
+      </div>
+      <div class="urlbar"><span class="lock">&#128274;</span>thumbtack.com/admin/requests/syndication/portal</div>
+      <div class="admwarn">PRACTICE ENVIRONMENT &mdash; fictional case, no production data</div>
+      <div class="view">
+        <div class="legacy">
+          <h4>Request Velocity Signals (180 days)</h4>
+          <table class="sig"><tr><th>Number of Previous Zip Codes</th></tr><tr><td></td></tr></table>
+
+          <h4>User Level Signals</h4>
+          <table class="sig">
+            <tr><th>Number of IPs used (180 days)</th><th>User Signup Days</th><th>Has Unknown Name</th><th>Name Email Distance</th><th>Number of Accounts w/ same Smart ID (1 Day)</th></tr>
+            <tr><td></td><td>3050</td><td></td><td>0.1062296137398013</td><td>1</td></tr>
+          </table>
+
+          <h4>Other Signals</h4>
+          <table class="sig">
+            <tr><th>Unknown Session</th><th>Os Anomaly</th><th>Is Repeated Spam</th><th>Tmx Device Status</th></tr>
+            <tr><td></td><td></td><td></td><td>Past Device Match</td></tr>
+          </table>
+
+          <h4>Message history</h4>
+          <p class="mh"><span class="pos">Net Positive</span> Services <a href="#" onclick="return false;">Above Ground Pool Installation Bid("PRACTICE-520985602")</a></p>
+          <p class="mh"><span class="who">Customer</span> Message 1: Sounds good! What's next?</p>
+          <p class="mh"><span class="who">Customer</span> Message 2: I'm looking for someone who can replace a liner in above ground pool do you do that?</p>
+
+          <h4>Linked Users</h4>
+          <table class="linked"><tr><th>User</th><th>Linked Types</th><th>Name</th><th>Status</th><th>Signup Date</th><th>Ghosted</th><th>Email</th><th>Has Services</th></tr></table>
+          <div class="twocol">
+            <div class="h">User's Recent Requests</div><div class="h">User's Services</div>
+            <div class="c">No Requests</div><div class="c">No Services</div>
+          </div>
+
+          <p class="synd-q">Should we syndicate this public request?</p>
+          <div class="synd-wrap">
+            <div class="synd-btns" id="syndDecide">
+              <button type="button" data-v="syndicate">Yes, Syndicate this request</button>
+              <button type="button" data-v="ghost">No, Ghost Request</button>
+              <button type="button" data-v="delete">No, Delete Request</button>
+            </div>
+            <div>
+              <div class="synd-sub hidden" id="syndForm">
+                <div class="chosen-pill">No, Delete Request</div>
+                <label for="f-expl">Not Syndicatable Explanation:</label>
+                <select id="f-expl">
+                  <option value="">Select…</option>
+                  <option value="barter">Barter or Free Service</option>
+                  <option value="competitor">Competitor Service</option>
+                  <option value="cca">Competitor Contact Abuse</option>
+                  <option value="discrimination">Discrimination</option>
+                  <option value="inappropriate">Inappropriate Content/Language</option>
+                  <option value="legally">Legally Questionable</option>
+                  <option value="minor12">Minor User - Under 12</option>
+                  <option value="minor1317">Minor User - 13-17</option>
+                  <option value="mismatched">Mismatched Category</option>
+                  <option value="nonus">Non-US Service Location</option>
+                  <option value="notaservice">Not a Service</option>
+                  <option value="notatt">Not a Thumbtack Service</option>
+                  <option value="other">Other Violation</option>
+                  <option value="qname">Questionable Name</option>
+                  <option value="seeking">Seeking Employment or Partnership</option>
+                  <option value="sexual">Sexual Content</option>
+                  <option value="thirdparty">Third Party Marketing</option>
+                  <option value="test">Test</option>
+                </select>
+                <label for="f-comment">Optional Comments:</label>
+                <input type="text" id="f-comment" placeholder="WT #, note the name">
+                <div class="submit-row">
+                  <button class="btn-primary" id="submitSynd" onclick="checkSynd()">Submit Answer</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="fb" id="decideFb" style="max-width:620px;"></div>
+          <div class="fb" id="syndFb" style="max-width:620px;"></div>
+          <p class="fhint" style="margin-top:14px;">Record the comment in the EG format: <b>WT #, Note name (unless sexual or inappropriate).</b> Include the work ticket number (<b>WT-40921753</b>) and the customer's name. &nbsp;<a href="#" onclick="go(2);return false;" style="color:var(--tt-blue-d);">Re-check the EG</a></p>
+        </div>
+      </div>
+    </div>
+    <div class="nav-foot">
+      <span class="progress-label">Step 3 of 4</span>
+      <button class="btn-primary" id="toSf" onclick="go(4)" disabled>Continue to Salesforce &rarr;</button>
+    </div>
+  </div>
+
+  <!-- STAGE 4: SALESFORCE WORK TICKET -->
+  <div class="stage" id="stage4">
+    <div class="browser">
+      <div class="tabbar">
+        <div class="tab cmr"><span class="fav"></span>Syndication Portal</div>
+        <div class="tab eg"><span class="fav"></span>Enforcement Guide</div>
+        <div class="tab admin"><span class="fav" style="background:#1a2230;"></span>Syndication &mdash; Decision</div>
+        <div class="tab sf active"><span class="fav"></span>Salesforce &mdash; Work Ticket</div>
+      </div>
+      <div class="urlbar"><span class="lock">&#128274;</span>thumbtack.lightning.force.com/lightning/r/WorkTicket</div>
+      <div class="view">
+        <div class="form-pad">
+          <h3>Work Ticket — log the outcome</h3>
+          <p class="sub">Record the same outcome on the Salesforce work ticket. Match each field to the EG row.</p>
+
+          <div class="wt-meta">
+            <div><span>Work Ticket #</span><b>WT-40921753</b></div>
+            <div><span>Routing</span><b>Contact Verification</b></div>
+            <div><span>Account</span><b>mike.dawson84@zentmail.net (PRACTICE-660318)</b></div>
+          </div>
+
+          <div class="fgroup" id="fg-outcome">
+            <label for="f-outcome">Outcome <span class="req-star">*</span></label>
+            <select id="f-outcome">
+              <option value="">--None--</option>
+              <option value="confirmed">Confirmed Violation</option>
+              <option value="noviolation">No Violation Found</option>
+            </select>
+          </div>
+
+          <div class="fgroup" id="fg-detail">
+            <label for="f-detail">Outcome Detail</label>
+            <select id="f-detail">
+              <option value="none">--None--</option>
+              <option value="tos">TOS Violation</option>
+            </select>
+          </div>
+
+          <div class="fgroup" id="fg-tos">
+            <label>TOS Violations <span class="req-star">*</span></label>
+            <p class="fhint" style="margin-top:0;margin-bottom:8px;">Move the correct violation from Available to Chosen.</p>
+            <div class="shuttle">
+              <div class="col" id="tosAvail">
+                <h5>Available</h5>
+                <div class="item" data-v="qname">Questionable Name</div>
+                <div class="item" data-v="seeking">Seeking Employment or Partnership</div>
+                <div class="item" data-v="sexual">Sexual Content</div>
+                <div class="item" data-v="spammy">Spammy</div>
+                <div class="item" data-v="test">Test</div>
+              </div>
+              <div class="mid">
+                <button type="button" id="toChosen" onclick="shuttleMove('chosen')" title="Move to Chosen">&rarr;</button>
+                <button type="button" id="toAvail" onclick="shuttleMove('avail')" title="Move to Available">&larr;</button>
+              </div>
+              <div class="col" id="tosChosen">
+                <h5>Chosen</h5>
+                <div class="empty" id="chosenEmpty">Nothing chosen yet</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="fgroup" id="fg-account">
+            <label for="f-account">Admin Actions &middot; Account Actions <span class="req-star">*</span></label>
+            <select id="f-account">
+              <option value="">Select…</option>
+              <option value="none">No Action</option>
+              <option value="hold">Hold</option>
+              <option value="ghost">Ghost</option>
+              <option value="delete">Delete</option>
+            </select>
+          </div>
+
+          <div class="fgroup" id="fg-notes">
+            <label for="f-notes">Internal Notes <span class="req-star">*</span></label>
+            <p class="fhint" style="margin-top:0;margin-bottom:8px;">Type the EG required comment: note the name (unless it's sexual or inappropriate).</p>
+            <textarea id="f-notes" rows="2" placeholder="WT #, note the customer's name"></textarea>
+          </div>
+
+          <div class="actions">
+            <button class="btn-ghost" onclick="go(3)">&larr; Back to syndication</button>
+            <button class="btn-sf" id="submitAction" onclick="checkAction()">Save work ticket</button>
+          </div>
+          <div class="fb" id="actionFb"></div>
+        </div>
+      </div>
+    </div>
+    <div class="nav-foot">
+      <span class="progress-label">Step 4 of 4</span>
+      <button class="btn-primary" id="toRecap" onclick="go(5)" disabled>See recap &rarr;</button>
+    </div>
+  </div>
+
+  <!-- STAGE 5: RECAP -->
+  <div class="stage" id="stage5">
+    <div class="browser" style="box-shadow:none;">
+      <div class="view" style="min-height:auto;">
+        <div class="pad">
+          <div class="recap-head">
+            <span class="recap-check">&#10003;</span>
+            <div>
+              <h3 style="margin:0 0 4px; font-size:1.35rem;">Case complete &mdash; you handled a questionable name correctly</h3>
+              <p style="margin:0; color:var(--muted); font-size:1rem;">Here's what you did, and why it matters on the floor.</p>
+            </div>
+          </div>
+
+          <div class="recap-grid">
+            <div class="recap-row"><span class="recap-k">The signal</span><span class="recap-v">The customer's <b>registered name was an email address</b> ("mike.dawson84@zentmail.net"), not a real name.</span></div>
+            <div class="recap-row"><span class="recap-k">Violation</span><span class="recap-v">Questionable Names &mdash; <b>Tier 1</b>.</span></div>
+            <div class="recap-row"><span class="recap-k">Action</span><span class="recap-v">In the syndication portal, <b>No, Delete Request</b>, explanation <b>Questionable Name</b>. The request is deleted manually.</span></div>
+            <div class="recap-row"><span class="recap-k">Salesforce</span><span class="recap-v">Outcome <b>Confirmed Violation</b>, Outcome Detail <b>TOS Violation</b>, TOS Violations <b>Questionable Name</b>, Account Action <b>No Action</b>, and an Internal Note that records the name.</span></div>
+            <div class="recap-row"><span class="recap-k">Not this</span><span class="recap-v">No account deletion, no blocklist, no escalation &mdash; only the request is deleted. Email-style names, social handles, URLs, and names containing <b>"XXX"</b> all land here under <b>Questionable Names</b>, not Sexual Content.</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="nav-foot">
+      <span class="progress-label">Recap</span>
+      <button class="btn-ghost" onclick="go(4)">&larr; Back to work ticket</button>
+    </div>
+  </div>
+
+</div>
+<script>
+const pulsedStages = new Set();
+function go(n){
+  document.querySelectorAll(".stage").forEach(s=>s.classList.remove("active"));
+  const cur=document.getElementById("stage"+n);
+  cur.classList.add("active");
+  document.querySelectorAll("#tracker .s").forEach((s,idx)=>{
+    s.classList.toggle("active", idx===n-1);
+    s.classList.toggle("done", idx<n-1);
+  });
+  if((n===3||n===4) && !pulsedStages.has(n)){
+    pulsedStages.add(n);
+    cur.querySelectorAll(".tab:not(.active)").forEach(t=>{
+      t.classList.add("pulse");
+      setTimeout(()=>t.classList.remove("pulse"), 3400);
+    });
+  }
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+// normalize for fair matching: trim, collapse spaces, lowercase, strip surrounding quotes
+function norm(s){ return (s||"").trim().replace(/\s+/g," ").replace(/^["']+|["']+$/g,"").toLowerCase(); }
+
+// --- tab hint dismissal ---
+function dismissHint(){ const h=document.getElementById("tabHint"); if(h) h.classList.add("gone"); }
+
+// --- clickable browser tabs: jump to the stage each tab represents ---
+document.querySelectorAll(".stage").forEach(stage=>{
+  const stageNum = parseInt(stage.id.replace("stage",""),10);
+  stage.querySelectorAll(".tab").forEach(tab=>{
+    let target = null;
+    if(tab.classList.contains("cmr")) target = 1;
+    else if(tab.classList.contains("eg")) target = 2;
+    else if(tab.classList.contains("admin")) target = 3;
+    else if(tab.classList.contains("sf")) target = 4;
+    if(target){
+      tab.addEventListener("click",()=>{ if(target!==stageNum){ dismissHint(); go(target); } });
+    }
+  });
+});
+
+// ===== STAGE 3: SYNDICATION DECISION =====
+// Correct path: "No, Delete Request" -> Explanation "Questionable Name".
+let syndDecision = null;
+(function wireDecide(){
+  const group=document.getElementById("syndDecide");
+  [...group.querySelectorAll("button")].forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const v=btn.dataset.v;
+      const fb=document.getElementById("decideFb");
+      [...group.querySelectorAll("button")].forEach(b=>b.classList.remove("picked-ok","picked-no"));
+      if(v==="delete"){
+        syndDecision="delete";
+        btn.classList.add("picked-ok");
+        fb.className="fb ok show";
+        fb.innerHTML="<b>Correct decision.</b> A Questionable Name isn't syndicated &mdash; the request is deleted. Now complete the explanation below.";
+        document.getElementById("syndForm").classList.remove("hidden");
+      } else {
+        syndDecision=null;
+        btn.classList.add("picked-no");
+        fb.className="fb no show";
+        const why = v==="syndicate"
+          ? "Syndicating would push a request with a questionable name out to pros. The EG says the request is <b>deleted</b>."
+          : "Ghosting hides the request but doesn't delete it. For Questionable Names the EG Syndicate action is <b>Delete</b>.";
+        fb.innerHTML="Not the right call. "+why+" Choose <b>No, Delete Request</b>.";
+        document.getElementById("syndForm").classList.add("hidden");
+      }
+    });
+  });
+})();
+
+// Salesforce work ticket number — the syndication comment must reference the SAME WT.
+const WT_NUMBER = "40921753";
+// lenient: reduce to digits only so "WT-40921753", "WT 40921753", "wt40921753", "40921753" all match
+function digits(s){ return (s||"").replace(/\D/g,""); }
+
+function checkSynd(){
+  const explEl=document.getElementById("f-expl");
+  const expl=explEl.value;
+  const commentEl=document.getElementById("f-comment");
+  const comment=commentEl.value;
+  const fb=document.getElementById("syndFb");
+  explEl.classList.remove("bad");
+  commentEl.classList.remove("bad");
+
+  if(!expl){
+    fb.className="fb no show";
+    fb.innerHTML="Choose a Not Syndicatable Explanation before submitting.";
+    explEl.classList.add("bad");
+    return;
+  }
+  if(expl!=="qname"){
+    fb.className="fb no show";
+    fb.innerHTML="Not quite &mdash; the explanation must match the violation. This is a <b>Questionable Name</b> (the registered name is an email address).";
+    explEl.classList.add("bad");
+    return;
+  }
+  // Comment is REQUIRED: must include the WT number AND note the name.
+  const hasWT = digits(comment).includes(WT_NUMBER);
+  const hasName = norm(comment).includes("mike.dawson84@zentmail.net");
+  if(!comment.trim()){
+    fb.className="fb no show";
+    fb.innerHTML="Add a comment before submitting. Follow the EG format: <b>WT #, Note name</b> &mdash; include the work ticket number (<b>WT-40921753</b>) and the customer's name.";
+    commentEl.classList.add("bad");
+    return;
+  }
+  if(!hasWT && !hasName){
+    fb.className="fb no show";
+    fb.innerHTML="Not quite &mdash; the comment needs the <b>work ticket number</b> (<b>WT-40921753</b>) <i>and</i> the customer's name (<b>mike.dawson84@zentmail.net</b>). EG format: <b>WT #, Note name</b>.";
+    commentEl.classList.add("bad");
+    return;
+  }
+  if(!hasWT){
+    fb.className="fb no show";
+    fb.innerHTML="Almost &mdash; add the <b>work ticket number</b>. It must match the ticket you'll log in Salesforce: <b>WT-40921753</b>.";
+    commentEl.classList.add("bad");
+    return;
+  }
+  if(!hasName){
+    fb.className="fb no show";
+    fb.innerHTML="Almost &mdash; the EG comment is <b>WT #, Note name</b>. Add the customer's name: <b>mike.dawson84@zentmail.net</b>.";
+    commentEl.classList.add("bad");
+    return;
+  }
+  fb.className="fb ok show";
+  fb.innerHTML="<b>Request deleted.</b> Explanation <b>Questionable Name</b> submitted, with the WT number and name noted. Now log the outcome in Salesforce.";
+  document.getElementById("toSf").disabled=false;
+  document.getElementById("submitSynd").disabled=true;
+}
+
+// ===== STAGE 4: SALESFORCE =====
+// --- TOS Violations shuttle (single correct pick: Questionable Name) ---
+let shuttleSel=null;      // currently highlighted item element
+let chosenVal=null;       // value currently in Chosen
+function clearSel(){ document.querySelectorAll(".shuttle .item.sel").forEach(i=>i.classList.remove("sel")); shuttleSel=null; }
+document.querySelectorAll(".shuttle .item").forEach(it=>{
+  it.addEventListener("click",()=>{
+    if(it.classList.contains("sel")){ it.classList.remove("sel"); shuttleSel=null; return; }
+    clearSel(); it.classList.add("sel"); shuttleSel=it;
+  });
+});
+function shuttleMove(dir){
+  const avail=document.getElementById("tosAvail");
+  const chosen=document.getElementById("tosChosen");
+  const emptyMsg=document.getElementById("chosenEmpty");
+  if(dir==="chosen"){
+    if(!shuttleSel || shuttleSel.parentElement!==avail) return;
+    chosen.appendChild(shuttleSel);
+    chosenVal=shuttleSel.dataset.v;
+    if(emptyMsg) emptyMsg.style.display="none";
+  } else {
+    if(!shuttleSel || shuttleSel.parentElement!==chosen) return;
+    // move back above the empty msg
+    avail.appendChild(shuttleSel);
+    chosenVal=null;
+    if(emptyMsg && chosen.querySelectorAll(".item").length===0) emptyMsg.style.display="block";
+  }
+  clearSel();
+}
+
+const correct = { outcome:"confirmed", detail:"tos", tos:"qname", account:"none" };
+// Internal Notes: EG required comment "Note name (unless sexual or inappropriate)".
+// This name is an email address (not sexual/inappropriate), so the note records the name.
+// Accept the email-name in any form (with or without WT#, any casing/spacing).
+function notesOK(){
+  const n=norm(document.getElementById("f-notes").value);
+  return n.includes("mike.dawson84@zentmail.net");
+}
+
+function checkAction(){
+  const o=document.getElementById("f-outcome").value;
+  const d=document.getElementById("f-detail").value;
+  const a=document.getElementById("f-account").value;
+  const notesVal=document.getElementById("f-notes").value;
+  const fb=document.getElementById("actionFb");
+  ["fg-outcome","fg-detail","fg-tos","fg-account","fg-notes"].forEach(id=>document.getElementById(id).classList.remove("bad"));
+
+  if(!o || !a || !chosenVal || !notesVal.trim()){
+    fb.className="fb no show";
+    fb.innerHTML="Complete the required fields (Outcome, TOS Violations, Account Actions, and Internal Notes) before saving.";
+    if(!o) document.getElementById("fg-outcome").classList.add("bad");
+    if(!chosenVal) document.getElementById("fg-tos").classList.add("bad");
+    if(!a) document.getElementById("fg-account").classList.add("bad");
+    if(!notesVal.trim()) document.getElementById("fg-notes").classList.add("bad");
+    return;
+  }
+  const wrong=[];
+  if(o!==correct.outcome){ wrong.push("Outcome"); document.getElementById("fg-outcome").classList.add("bad"); }
+  if(d!==correct.detail){ wrong.push("Outcome Detail"); document.getElementById("fg-detail").classList.add("bad"); }
+  if(chosenVal!==correct.tos){ wrong.push("TOS Violations"); document.getElementById("fg-tos").classList.add("bad"); }
+  if(a!==correct.account){ wrong.push("Account Actions"); document.getElementById("fg-account").classList.add("bad"); }
+  if(!notesOK()){ wrong.push("Internal Notes"); document.getElementById("fg-notes").classList.add("bad"); }
+
+  if(wrong.length===0){
+    fb.className="fb ok show";
+    fb.innerHTML="<b>Correct.</b> Questionable Names is Tier 1: Outcome <b>Confirmed Violation</b>, Outcome Detail <b>TOS Violation</b>, TOS Violations <b>Questionable Name</b>, Account Action <b>No Action</b>, and the note records the name. No account deletion, no blocklist, no escalation.";
+    document.getElementById("toRecap").disabled=false;
+    document.getElementById("submitAction").disabled=true;
+  } else {
+    fb.className="fb no show";
+    let tip="Tip: Questionable Names deletes the <i>request</i> only &mdash; Outcome <b>Confirmed Violation</b>, Detail <b>TOS Violation</b>, and Account Action <b>No Action</b> (no deletion, no blocklist).";
+    if(wrong.length===1 && wrong[0]==="Internal Notes"){
+      tip="Tip: the EG comment is <b>\u201CNote name (unless sexual or inappropriate)\u201D</b> &mdash; this name isn't sexual, so record it: <b>mike.dawson84@zentmail.net</b>.";
+    } else if(wrong.length===1 && wrong[0]==="TOS Violations"){
+      tip="Tip: in the <b>TOS Violations</b> picker, move <b>Questionable Name</b> into Chosen &mdash; that's the violation you confirmed. Send any other selection back to Available.";
+    } else if(wrong.includes("Account Actions") && a==="delete"){
+      tip="Tip: don't delete the account &mdash; Questionable Names deletes the <i>request</i> only. The Admin Action is <b>None</b> / <b>No Action</b>.";
+    }
+    fb.innerHTML="Not quite &mdash; re-check the highlighted "+(wrong.length>1?"fields":"field")+" ("+wrong.join(", ")+"). "+tip;
+  }
+}
+</script>
+</body>
+</html>
