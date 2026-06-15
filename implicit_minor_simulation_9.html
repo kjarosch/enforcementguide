@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Apply the Change — Implicit Minor Simulation</title>
+<style>
+  :root{
+    --ink:#1a2230; --muted:#5a6b80; --line:#d4dae3; --line-soft:#e8ecf2;
+    --paper:#ffffff; --shell:#eef1f5;
+    --tt-blue:#0074AD; --tt-blue-d:#005199;
+    --warn-bg:#FFEFF0; --warn-line:#FFB080; --warn-text:#790D10;
+    --eg-orange:#FEBE14; --eg-row:#ece6f6; --eg-hold-bg:#FBE8B3; --eg-hold-tx:#a77005; --eg-none-bg:#FDF7E7;
+    --ok:#2DB783; --ok-d:#168558; --ok-bg:#E1FDF3;
+    --field-label:#42526b; --crit:#B22D31;
+    --radius:8px;
+    --mono:"SF Mono",ui-monospace,"Cascadia Code",Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--shell); font-family:var(--sans); color:var(--ink); -webkit-font-smoothing:antialiased; padding:1.5rem;}
+  .frame{max-width:1080px; margin:0 auto;}
+
+  .lh{margin-bottom:1rem;}
+  .lh .eyebrow{font-size:.82rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--tt-blue-d);}
+  .lh h1{font-size:1.7rem; font-weight:700; margin:.25rem 0 .5rem;}
+  .lh p{font-size:1.05rem; line-height:1.55; color:var(--muted); margin:0; max-width:780px;}
+
+  .steps{display:flex; gap:6px; margin:1rem 0 1.25rem; flex-wrap:wrap;}
+  .steps .s{flex:1; min-width:120px; border:1px solid var(--line); border-radius:6px; background:var(--paper); padding:8px 12px; font-size:.82rem; color:var(--muted); display:flex; align-items:center; gap:8px;}
+  .steps .s .n{width:20px; height:20px; border-radius:50%; background:var(--line); color:#fff; display:flex; align-items:center; justify-content:center; font-size:.72rem; font-weight:700; flex:none;}
+  .steps .s.active{border-color:var(--tt-blue); color:var(--ink); font-weight:600;}
+  .steps .s.active .n{background:var(--tt-blue);}
+  .steps .s.done .n{background:var(--ok);}
+
+  .browser{background:var(--paper); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; box-shadow:0 2px 14px rgba(20,40,70,.07);}
+  .tabbar{display:flex; align-items:center; gap:8px; background:#dfe4ea; padding:8px 12px 0;}
+  .tab{background:#eef1f5; border-radius:8px 8px 0 0; padding:8px 14px; font-size:.82rem; color:var(--muted); display:flex; align-items:center; gap:8px; border:1px solid transparent; border-bottom:none; max-width:240px; cursor:pointer; transition:background .1s, box-shadow .1s; position:relative;}
+  .tab:not(.active):hover{background:#f6f8fa; color:var(--tt-blue-d); box-shadow:inset 0 -2px 0 var(--tt-blue);}
+  .tab:not(.active)::after{content:"\21A9"; font-size:.8rem; opacity:0; margin-left:2px; transition:opacity .1s; color:var(--tt-blue);}
+  .tab:not(.active):hover::after{opacity:.8;}
+  .tab.pulse:not(.active){animation:tabpulse 1.6s ease 2;}
+  @keyframes tabpulse{0%,100%{box-shadow:inset 0 -2px 0 transparent;} 50%{box-shadow:inset 0 -3px 0 var(--tt-blue);}}
+
+  .tabhint{display:flex; align-items:center; gap:8px; font-size:.9rem; color:var(--tt-blue-d); background:#E6F1FD; border:1px solid #96C2FF; border-radius:6px; padding:8px 12px; margin-bottom:10px; transition:opacity .3s;}
+  .tabhint.gone{opacity:0; height:0; padding:0; margin:0; border:0; overflow:hidden;}
+  .tabhint .x{margin-left:auto; cursor:pointer; font-weight:700; opacity:.6;}
+  .tabhint .x:hover{opacity:1;}
+  .tab.active{background:var(--paper); color:var(--ink); font-weight:600;}
+  .tab .fav{width:12px; height:12px; border-radius:3px; flex:none;}
+  .tab.cmr .fav{background:var(--tt-blue);} .tab.eg .fav{background:var(--eg-orange);} .tab.admin .fav{background:#1a2230;} .tab.sf .fav{background:#00A1E0;}
+  .urlbar{background:var(--paper); border-bottom:1px solid var(--line); padding:8px 14px; font-family:var(--mono); font-size:.8rem; color:var(--muted); display:flex; align-items:center; gap:10px;}
+  .urlbar .lock{color:var(--ok-d);}
+  .view{min-height:430px;}
+  .admwarn{background:var(--warn-bg); border-bottom:1px solid var(--warn-line); color:var(--warn-text); font-size:.8rem; text-align:center; padding:6px 12px; font-weight:600;}
+  .pad{padding:20px 26px;}
+
+  .req-title{font-size:1.3rem; font-weight:700; color:var(--tt-blue-d); margin:0 0 2px;}
+  .req-sub{font-size:.9rem; color:var(--muted); margin:0 0 16px;}
+  table.req{width:100%; border-collapse:collapse; font-size:.92rem; margin-bottom:6px;}
+  table.req td{padding:7px 10px; vertical-align:top; border-bottom:1px solid var(--line-soft);}
+  table.req td.k{width:200px; text-align:right; color:var(--field-label); font-weight:600;}
+  .msgs{margin-top:6px;}
+  .msg{border:1px solid var(--line-soft); border-radius:8px; padding:11px 14px; margin-bottom:10px; font-size:.95rem; line-height:1.5; background:#fafbfc;}
+  .msg .who{font-size:.78rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin-bottom:4px;}
+  .flag{background:#FBE8B3; padding:0 3px; border-radius:3px;}
+
+  .coach{margin:16px 26px 0; background:#E6F1FD; border:1px solid #96C2FF; border-radius:var(--radius); padding:14px 16px; font-size:.95rem; line-height:1.5; color:#063a63;}
+  .coach b{color:var(--tt-blue-d);}
+
+  .egbar{background:#E1FDF3; border-bottom:1px solid var(--line); font-size:.82rem; color:var(--ok-d); padding:6px 14px;}
+  .egwrap{padding:18px 22px; overflow-x:auto;}
+  table.eg{border-collapse:collapse; font-size:.85rem; width:100%; min-width:820px;}
+  table.eg th{background:#6b6b6b; color:#fff; font-weight:600; padding:8px 10px; text-align:left; border:1px solid #cfd5dd; font-size:.8rem;}
+  table.eg td{padding:7px 10px; border:1px solid #cfd5dd; vertical-align:top;}
+  .eg-titlecell{background:var(--eg-row); font-weight:700; font-size:1rem; width:150px;}
+  .eg-usertype{background:var(--eg-row); width:90px; text-align:center; vertical-align:middle;}
+  .eg-pickkey{font-weight:700; width:90px;}
+  .eg-tier{background:var(--eg-row); text-align:center; font-weight:700; font-size:1.05rem; vertical-align:middle; width:48px;}
+  .eg-none{background:var(--eg-none-bg); color:var(--eg-hold-tx); font-weight:700; text-align:center;}
+  .eg-hold{background:var(--eg-hold-bg); color:var(--eg-hold-tx); font-weight:700; text-align:center;}
+  .eg-no{background:#C6F7DA; color:var(--ok-d); font-weight:700; text-align:center;}
+  tr.eg-target td{outline:2px solid var(--tt-blue); outline-offset:-2px;}
+
+  .form-pad{padding:22px 26px;}
+  .form-pad h3{margin:0 0 4px; font-size:1.15rem;}
+  .form-pad .sub{font-size:.9rem; color:var(--muted); margin:0 0 18px;}
+  .wt-meta{display:flex; gap:24px; flex-wrap:wrap; background:#f4f6f9; border:1px solid var(--line); border-radius:8px; padding:12px 16px; margin-bottom:20px; font-size:.85rem;}
+  .wt-meta div span{display:block; color:var(--muted); font-size:.75rem; text-transform:uppercase; letter-spacing:.04em;}
+  .wt-meta div b{font-size:.95rem;}
+  .fgroup{margin-bottom:16px; max-width:580px;}
+  .fgroup label{display:block; font-size:.85rem; font-weight:600; color:var(--field-label); margin-bottom:5px;}
+  .req-star{color:var(--crit);}
+  .fgroup select, .fgroup input, .fgroup textarea{width:100%; font-family:var(--sans); font-size:.95rem; padding:9px 11px; border:1px solid var(--line); border-radius:6px; background:var(--paper); color:var(--ink);}
+  .fgroup select:focus, .fgroup textarea:focus{outline:2px solid var(--tt-blue); border-color:var(--tt-blue);}
+  .fgroup.bad select, .fgroup.bad textarea{border-color:var(--crit);}
+  .fhint{font-size:.8rem; color:var(--muted); margin-top:4px;}
+
+  .actions{display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:8px;}
+  button{font-family:var(--sans); font-size:.95rem; font-weight:600; border-radius:6px; cursor:pointer; border:1px solid transparent; padding:10px 20px; transition:transform .08s,background .12s;}
+  button:active{transform:scale(.98);}
+  button:disabled{opacity:.45; cursor:not-allowed;}
+  .btn-primary{background:var(--tt-blue); color:#fff;}
+  .btn-primary:hover:not(:disabled){background:var(--tt-blue-d);}
+  .btn-ghost{background:var(--paper); color:var(--tt-blue-d); border-color:var(--tt-blue);}
+  .btn-eg{background:var(--eg-orange); color:#5a4500;}
+  .btn-sf{background:#00A1E0; color:#fff;}
+
+  .fb{margin-top:16px; border-radius:var(--radius); padding:14px 16px; font-size:.95rem; line-height:1.5; display:none;}
+  .fb.show{display:block; animation:fade .25s ease;}
+  .fb.ok{background:var(--ok-bg); border:1px solid var(--ok); color:var(--ok-d);}
+  .fb.no{background:var(--warn-bg); border:1px solid var(--warn-line); color:var(--warn-text);}
+  @keyframes fade{from{opacity:0; transform:translateY(5px);} to{opacity:1; transform:none;}}
+
+  /* syndication-style decision buttons (reused look for the message-review decision) */
+  .decide{display:flex; flex-direction:column; gap:10px; max-width:420px; margin-top:4px;}
+  .decide button{width:100%; text-align:left; border:1px solid var(--line); background:var(--paper); color:var(--ink); font-weight:600; padding:13px 16px;}
+  .decide button:hover{border-color:var(--tt-blue);}
+  .decide button.picked-ok{border-color:var(--ok); background:var(--ok-bg);}
+  .decide button.picked-no{border-color:var(--crit); background:var(--warn-bg);}
+
+  .notepick{display:flex; flex-direction:column; gap:8px;}
+  .notepick button{width:100%; text-align:left; font-family:var(--mono); font-size:.9rem; font-weight:500; border:1px solid var(--line); background:var(--paper); color:var(--ink); padding:11px 14px; border-radius:6px;}
+  .notepick button:hover{border-color:var(--tt-blue);}
+  .notepick button.sel{border-color:var(--tt-blue); background:#E6F1FD; font-weight:600;}
+  .note-preview{font-family:var(--mono); font-size:.88rem; color:var(--ok-d); background:var(--ok-bg); border-radius:6px; padding:10px 12px; margin:12px 0 0; display:none;}
+  .note-preview.show{display:block;}
+
+  .mc{background:var(--paper); border:1px solid var(--line); border-radius:var(--radius); padding:22px 26px; margin-top:18px;}
+  .mc h3{margin:0 0 14px; font-size:1.1rem;}
+  .opt{display:flex; gap:12px; align-items:flex-start; border:1px solid var(--line); border-radius:8px; padding:13px 15px; margin-bottom:10px; cursor:pointer; transition:border-color .12s,background .12s; font-size:.95rem; line-height:1.45;}
+  .opt:hover{border-color:var(--tt-blue);}
+  .opt .radio{width:18px; height:18px; border-radius:50%; border:2px solid var(--line); flex:none; margin-top:2px;}
+  .opt.correct{border-color:var(--ok); background:var(--ok-bg);}
+  .opt.wrong{border-color:var(--crit); background:var(--warn-bg);}
+  .opt.locked{cursor:default; pointer-events:none;}
+
+  .stage{display:none;}
+  .stage.active{display:block;}
+
+  .recap-head{display:flex; gap:14px; align-items:flex-start; margin-bottom:20px;}
+  .recap-check{flex:none; width:40px; height:40px; border-radius:50%; background:var(--ok); color:#fff; display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:700;}
+  .recap-grid{display:flex; flex-direction:column; gap:0; border:1px solid var(--line); border-radius:var(--radius); overflow:hidden;}
+  .recap-row{display:grid; grid-template-columns:150px 1fr; gap:0;}
+  .recap-row:not(:last-child){border-bottom:1px solid var(--line-soft);}
+  .recap-k{background:#f4f6f9; padding:14px 16px; font-weight:700; font-size:.9rem; color:var(--field-label);}
+  .recap-v{padding:14px 16px; font-size:1rem; line-height:1.5;}
+  @media (max-width:560px){ .recap-row{grid-template-columns:1fr;} .recap-k{border-bottom:1px solid var(--line-soft);} }
+  .nav-foot{display:flex; justify-content:space-between; align-items:center; margin-top:14px;}
+  .nav-foot .progress-label{font-size:.85rem; color:var(--muted);}
+  .nav-foot .right{display:flex; gap:10px;}
+</style>
+</head>
+<body>
+<div class="frame">
+
+  <div class="lh">
+    <span class="eyebrow">Apply the Change &middot; Simulation</span>
+    <h1>Work the case: a possible minor in Customer Message Review</h1>
+    <p>You're reviewing a customer message in the CMR queue. Read it, look it up in the Enforcement Guide, then take the action the EG calls for.</p>
+  </div>
+
+  <div class="tabhint" id="tabHint">
+    <span>&#128161;</span>
+    <span>Tip: the browser tabs are clickable &mdash; jump back to the <b>message</b> or the <b>Enforcement Guide</b> anytime, no need to step backward.</span>
+    <span class="x" onclick="dismissHint()" title="Dismiss">&times;</span>
+  </div>
+
+  <div class="steps" id="tracker">
+    <div class="s active"><span class="n">1</span>Read the message</div>
+    <div class="s"><span class="n">2</span>Find it in the EG</div>
+    <div class="s"><span class="n">3</span>Hold the account</div>
+    <div class="s"><span class="n">4</span>Log it in Salesforce</div>
+  </div>
+
+  <!-- STAGE 1 -->
+  <div class="stage active" id="stage1">
+    <div class="browser">
+      <div class="tabbar">
+        <div class="tab cmr active"><span class="fav"></span>Customer Message Review</div>
+        <div class="tab eg"><span class="fav"></span>Enforcement Guide</div>
+        <div class="tab admin"><span class="fav" style="background:#1a2230;"></span>Admin &mdash; Add Hold</div>
+        <div class="tab sf"><span class="fav"></span>Salesforce &mdash; Work Ticket</div>
+      </div>
+      <div class="urlbar"><span class="lock">&#128274;</span>thumbtack.com/admin/requests/request</div>
+      <div class="admwarn">PRACTICE ENVIRONMENT &mdash; fictional case, no production data</div>
+      <div class="view">
+        <div class="pad">
+          <p class="req-title">Writing and Editing Services (PRACTICE-770214) | Customer: A. Rivera</p>
+          <p class="req-sub">Customer Message Review &middot; Routing: Customer Message Review &middot; Status: New</p>
+          <table class="req">
+            <tr><td class="k">Request category</td><td>Writing and Editing Services</td></tr>
+            <tr><td class="k">Request intro type</td><td>Estimation</td></tr>
+          </table>
+          <div class="msgs">
+            <div class="msg">
+              <div class="who">Customer message 1</div>
+              Can you send me a price estimate for the job?
+            </div>
+            <div class="msg">
+              <div class="who">Customer message 2</div>
+              I'm looking to collaborate with someone to help proofread and edit my fictional book and get it ready for publishing. <span class="flag">I am a teenager</span> and unsure where to start.
+            </div>
+          </div>
+        </div>
+        <div class="coach">
+          <b>What stands out?</b> The message says <b>"I am a teenager"</b> &mdash; the requester <b>implies</b> they're a minor without stating a specific age. That's the trigger for the new <b>Implicit Minor</b> handling, not a confirmed-age deletion. Check the EG for the exact action.
+        </div>
+      </div>
+    </div>
+    <div class="nav-foot">
+      <span class="progress-label">Step 1 of 4</span>
+      <button class="btn-eg" onclick="go(2)">Open the Enforcement Guide &rarr;</button>
+    </div>
+  </div>
+
+  <!-- STAGE 2 -->
+  <div class="stage" id="stage2">
+    <div class="browser">
+      <div class="tabbar">
+        <div class="tab cmr"><span class="fav"></span>Customer Message Review</div>
+        <div class="tab eg active"><span class="fav"></span>Enforcement Guide</div>
+        <div class="tab admin"><span class="fav" style="background:#1a2230;"></span>Admin &mdash; Add Hold</div>
+        <div class="tab sf"><span class="fav"></span>Salesforce &mdash; Work Ticket</div>
+      </div>
+      <div class="urlbar"><span class="lock">&#128274;</span>docs.google.com/spreadsheets &middot; Enforcement Guide &middot; <b>CMR</b> tab</div>
+      <div class="egbar">"File sensitivity" label applied &mdash; set to "Internal" automatically</div>
+      <div class="view">
+        <div class="egwrap">
+          <table class="eg">
+            <tr>
+              <th>Title</th><th>User Type</th><th colspan="2">Picklist</th><th>Tier</th>
+              <th>Syndicate</th><th>Admin Action</th><th>Blocklist</th><th>Escalation</th>
+            </tr>
+            <tr class="eg-target">
+              <td class="eg-titlecell" rowspan="4">Implicit Minor (17 or Under)</td>
+              <td class="eg-usertype" rowspan="4">Customer</td>
+              <td class="eg-pickkey">REQUEST:</td><td>N/A</td>
+              <td class="eg-tier" rowspan="4">1</td>
+              <td class="eg-none" rowspan="4">None</td>
+              <td class="eg-hold" rowspan="4">Hold</td>
+              <td class="eg-no" rowspan="4">No</td>
+              <td class="eg-no" rowspan="4">No</td>
+            </tr>
+            <tr class="eg-target"><td class="eg-pickkey">TACK:</td><td>No Violation Found &mdash; Implicit minor; sent to ID Help to verify age - [insert evidence]</td></tr>
+            <tr class="eg-target"><td class="eg-pickkey">ADMIN:</td><td>User needs to verify &mdash; Requires ID authentication to verify age</td></tr>
+            <tr class="eg-target"><td class="eg-pickkey">BLIST:</td><td>N/A</td></tr>
+            <tr>
+              <td class="eg-titlecell" rowspan="2">Confirmed Minor User (13-17)</td>
+              <td class="eg-usertype" rowspan="2">Customer</td>
+              <td class="eg-pickkey">REQUEST:</td><td>Minor User - 13-17</td>
+              <td class="eg-tier" rowspan="2">3</td>
+              <td class="eg-no" rowspan="2" style="background:#C6F7DA;">Delete<br>Manual</td>
+              <td class="eg-no" rowspan="2" style="background:#C6F7DA;">Delete<br>Manual</td>
+              <td class="eg-no" rowspan="2">No</td>
+              <td class="eg-no" rowspan="2">No</td>
+            </tr>
+            <tr><td class="eg-pickkey">TACK:</td><td>Confirmed Violation | TOS Violation | Minor User (13-17)</td></tr>
+          </table>
+        </div>
+        <div class="coach">
+          <b>Read the right row.</b> A. Rivera only <i>implied</i> being a minor ("I am a teenager") &mdash; no stated age. That's <b>Implicit Minor (17 or Under)</b> (outlined): Tier 1, Admin Action <b>Hold</b>, <b>No Violation Found</b>, and the user goes to <b>ID Help</b> to verify age. It is <b>not</b> deleted &mdash; that's the Confirmed Minor row below, which needs a stated age. Now take the action.
+        </div>
+      </div>
+    </div>
+    <div class="nav-foot">
+      <span class="progress-label">Step 2 of 5</span>
+      <div class="right">
+        <button class="btn-ghost" onclick="go(1)">&larr; Back to message</button>
+        <button class="btn-primary" onclick="go(3)">Go to the admin action &rarr;</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STAGE 3: HOLD SCREEN (admin tool) -->
+  <div class="stage" id="stage3">
+    <div class="browser">
+      <div class="tabbar">
+        <div class="tab cmr"><span class="fav"></span>Customer Message Review</div>
+        <div class="tab eg"><span class="fav"></span>Enforcement Guide</div>
+        <div class="tab admin active"><span class="fav" style="background:#1a2230;"></span>Admin &mdash; Add Hold</div>
+        <div class="tab sf"><span class="fav"></span>Salesforce &mdash; Work Ticket</div>
+      </div>
+      <div class="urlbar"><span class="lock">&#128274;</span>admin.thumbtack.io/users/PRACTICE-770214/customer-account-hold?action=add_hold</div>
+      <div class="admwarn">PRACTICE ENVIRONMENT &mdash; fictional case, no production data</div>
+      <div class="view">
+        <div class="form-pad">
+          <h3>Confirm Add Customer Hold of A. Rivera</h3>
+          <p class="sub">The EG says an implicit minor goes on hold and into ID Help. Set the hold reason and notes to match the EG row.</p>
+
+          <div class="fgroup" id="fg-holdreason">
+            <label for="f-holdreason">Reason <span class="req-star">*</span></label>
+            <select id="f-holdreason">
+              <option value="">Select…</option>
+              <option value="verify">User needs to verify</option>
+              <option value="minor1317">Minor User - 13-17</option>
+              <option value="spam">Scammy request behavior</option>
+              <option value="dispute">Open dispute</option>
+            </select>
+          </div>
+
+          <div class="fgroup" id="fg-holdnotes">
+            <label for="f-holdnotes">Notes</label>
+            <textarea id="f-holdnotes" rows="2" placeholder="Type the EG ADMIN note exactly"></textarea>
+            <p class="fhint">Type the EG ADMIN note for this violation, word for word.</p>
+          </div>
+
+          <div class="actions">
+            <button class="btn-ghost" onclick="go(2)">&larr; Re-check the EG</button>
+            <button class="btn-primary" id="submitHold" onclick="checkHold()">Confirm hold</button>
+          </div>
+          <div class="fb" id="holdFb"></div>
+        </div>
+      </div>
+    </div>
+    <div class="nav-foot">
+      <span class="progress-label">Step 3 of 5</span>
+      <button class="btn-primary" id="toSf" onclick="go(4)" disabled>Continue to Salesforce &rarr;</button>
+    </div>
+  </div>
+
+  <!-- STAGE 4: SALESFORCE WORK TICKET -->
+  <div class="stage" id="stage4">
+    <div class="browser">
+      <div class="tabbar">
+        <div class="tab cmr"><span class="fav"></span>Customer Message Review</div>
+        <div class="tab eg"><span class="fav"></span>Enforcement Guide</div>
+        <div class="tab admin"><span class="fav" style="background:#1a2230;"></span>Admin &mdash; Add Hold</div>
+        <div class="tab sf active"><span class="fav"></span>Salesforce &mdash; Work Ticket</div>
+      </div>
+      <div class="urlbar"><span class="lock">&#128274;</span>thumbtack.lightning.force.com/lightning/r/WorkTicket</div>
+      <div class="view">
+        <div class="form-pad">
+          <h3>Work Ticket — log the outcome</h3>
+          <p class="sub">Now record the same outcome on the Salesforce work ticket. Match each field to the EG row.</p>
+
+          <div class="wt-meta">
+            <div><span>Work Ticket #</span><b>WT-30568142</b></div>
+            <div><span>Routing</span><b>Customer Message Review</b></div>
+            <div><span>Account</span><b>A. Rivera (PRACTICE-770214)</b></div>
+          </div>
+
+          <div class="fgroup" id="fg-outcome">
+            <label for="f-outcome">Outcome <span class="req-star">*</span></label>
+            <select id="f-outcome">
+              <option value="">--None--</option>
+              <option value="noviolation">No Violation Found</option>
+              <option value="confirmed">Confirmed Violation</option>
+            </select>
+          </div>
+
+          <div class="fgroup" id="fg-detail">
+            <label for="f-detail">Outcome Detail</label>
+            <select id="f-detail">
+              <option value="none">--None--</option>
+              <option value="tos">TOS Violation</option>
+            </select>
+            <p class="fhint">No confirmed TOS violation yet — the user still needs to verify age.</p>
+          </div>
+
+          <div class="fgroup" id="fg-account">
+            <label for="f-account">Admin Actions &middot; Account Actions <span class="req-star">*</span></label>
+            <select id="f-account">
+              <option value="">Select…</option>
+              <option value="hold">Hold</option>
+              <option value="delete">Delete</option>
+              <option value="ghost">Ghost</option>
+              <option value="none">No Action</option>
+            </select>
+          </div>
+
+          <div class="fgroup" id="fg-notes">
+            <label>Internal Notes <span class="req-star">*</span></label>
+            <p class="fhint" style="margin-top:0;margin-bottom:8px;">Pick the note that matches the EG format, then choose the evidence that proves it.</p>
+            <div class="notepick" id="notePick">
+              <button type="button" data-v="good">Implicit minor; sent to ID Help to verify age - [evidence]</button>
+              <button type="button" data-v="confirmed">Confirmed minor (13-17); account deleted per TOS.</button>
+              <button type="button" data-v="vague">Possible minor, took action.</button>
+            </div>
+            <div id="evidenceWrap" style="display:none; margin-top:14px;">
+              <label for="f-evidence" style="font-size:.82rem;">Now fill the <b>[evidence]</b> bracket — type the exact phrase from the message that proves it.</label>
+              <input type="text" id="f-evidence" placeholder="Quote the proof from the customer's message" oninput="updatePreview()">
+              <p class="fhint">Use the requester's own words from the message.</p>
+              <p class="note-preview" id="notePreview"></p>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button class="btn-ghost" onclick="go(3)">&larr; Back to hold</button>
+            <button class="btn-sf" id="submitAction" onclick="checkAction()">Save work ticket</button>
+          </div>
+          <div class="fb" id="actionFb"></div>
+        </div>
+      </div>
+    </div>
+    <div class="nav-foot">
+      <span class="progress-label">Step 4 of 4</span>
+      <button class="btn-primary" id="toMc" onclick="go(5)" disabled>See recap &rarr;</button>
+    </div>
+  </div>
+
+  <!-- STAGE 5: RECAP -->
+  <div class="stage" id="stage5">
+    <div class="browser" style="box-shadow:none;">
+      <div class="view" style="min-height:auto;">
+        <div class="pad">
+          <div class="recap-head">
+            <span class="recap-check">&#10003;</span>
+            <div>
+              <h3 style="margin:0 0 4px; font-size:1.35rem;">Case complete &mdash; you handled an implicit minor correctly</h3>
+              <p style="margin:0; color:var(--muted); font-size:1rem;">Here's what you did, and why it matters on the floor.</p>
+            </div>
+          </div>
+
+          <div class="recap-grid">
+            <div class="recap-row"><span class="recap-k">The signal</span><span class="recap-v">The requester <b>implied</b> being a minor ("I am a teenager") with no stated age.</span></div>
+            <div class="recap-row"><span class="recap-k">Violation</span><span class="recap-v">Implicit Minor (17 or Under) &mdash; <b>Tier 1</b>.</span></div>
+            <div class="recap-row"><span class="recap-k">Action</span><span class="recap-v"><b>Hold</b> the account, reason <b>User needs to verify</b>, and route to <b>ID Help</b> to authenticate age.</span></div>
+            <div class="recap-row"><span class="recap-k">Salesforce</span><span class="recap-v">Outcome <b>No Violation Found</b>, no Outcome Detail, Account Action <b>Hold</b>, note documenting the implied age as evidence.</span></div>
+            <div class="recap-row"><span class="recap-k">Not this</span><span class="recap-v">No deletion, no blocklist, no escalation. A <b>stated</b> age ("I'm 17") would have been a Confirmed Minor &mdash; Tier 3, account deletion. That's the distinction to carry to your next case.</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="nav-foot">
+      <span class="progress-label">Recap</span>
+      <button class="btn-ghost" onclick="go(4)">&larr; Back to work ticket</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const pulsedStages = new Set();
+function go(n){
+  document.querySelectorAll(".stage").forEach(s=>s.classList.remove("active"));
+  const cur=document.getElementById("stage"+n);
+  cur.classList.add("active");
+  document.querySelectorAll("#tracker .s").forEach((s,idx)=>{
+    s.classList.toggle("active", idx===n-1);
+    s.classList.toggle("done", idx<n-1);
+  });
+  // first time on an action stage, pulse the inactive tabs once to signal they're clickable
+  if((n===3||n===4) && !pulsedStages.has(n)){
+    pulsedStages.add(n);
+    cur.querySelectorAll(".tab:not(.active)").forEach(t=>{
+      t.classList.add("pulse");
+      setTimeout(()=>t.classList.remove("pulse"), 3400);
+    });
+  }
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+// --- note-pick selection state ---
+const picks = { sfNote:null };
+function wirePick(groupId, key, onPick){
+  const group=document.getElementById(groupId);
+  if(!group) return;
+  [...group.querySelectorAll("button")].forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      [...group.querySelectorAll("button")].forEach(b=>b.classList.remove("sel"));
+      btn.classList.add("sel");
+      picks[key]=btn.dataset.v;
+      if(onPick) onPick(btn.dataset.v);
+    });
+  });
+}
+wirePick("notePick","sfNote",(v)=>{
+  document.getElementById("evidenceWrap").style.display = "block";
+  updatePreview();
+});
+
+// normalize for fair matching: trim, collapse spaces, lowercase, strip surrounding quotes
+function norm(s){ return (s||"").trim().replace(/\s+/g," ").replace(/^["']+|["']+$/g,"").toLowerCase(); }
+function evidenceOK(){ return norm(document.getElementById("f-evidence").value).includes("i am a teenager"); }
+
+function updatePreview(){
+  const prev=document.getElementById("notePreview");
+  const ev=document.getElementById("f-evidence").value.trim();
+  if(picks.sfNote==="good" && ev){
+    prev.textContent = "Implicit minor; sent to ID Help to verify age - ["+ev.replace(/^["']+|["']+$/g,"")+"]";
+    prev.classList.add("show");
+  } else {
+    prev.classList.remove("show");
+  }
+}
+
+// Stage 3 — Hold screen. EG: Reason "User needs to verify", Note (verbatim) "Requires ID authentication to verify age"
+const HOLD_NOTE = "requires id authentication to verify age";
+function checkHold(){
+  const r=document.getElementById("f-holdreason").value;
+  const noteVal=document.getElementById("f-holdnotes").value;
+  const fb=document.getElementById("holdFb");
+  ["fg-holdreason","fg-holdnotes"].forEach(id=>document.getElementById(id).classList.remove("bad"));
+  if(!r || !noteVal.trim()){
+    fb.className="fb no show";
+    fb.innerHTML="Choose a hold reason and type the note before confirming.";
+    if(!r) document.getElementById("fg-holdreason").classList.add("bad");
+    if(!noteVal.trim()) document.getElementById("fg-holdnotes").classList.add("bad");
+    return;
+  }
+  const wrong=[];
+  if(r!=="verify"){ wrong.push("Reason"); document.getElementById("fg-holdreason").classList.add("bad"); }
+  if(!norm(noteVal).includes(HOLD_NOTE)){ wrong.push("Notes"); document.getElementById("fg-holdnotes").classList.add("bad"); }
+  if(wrong.length){
+    fb.className="fb no show";
+    if(wrong.includes("Notes") && wrong.length===1){
+      fb.innerHTML="The note must match the EG ADMIN value <b>word for word</b>: \u201CRequires ID authentication to verify age\u201D. Check your wording.";
+    } else {
+      fb.innerHTML="Not quite — re-check the highlighted "+(wrong.length>1?"fields":"field")+". For an implicit minor the reason is <b>User needs to verify</b> and the note is <b>Requires ID authentication to verify age</b>. (A stated age would be a deletion, not a hold.)";
+    }
+    return;
+  }
+  fb.className="fb ok show";
+  fb.innerHTML="<b>Hold confirmed.</b> Reason <b>User needs to verify</b>, note <b>Requires ID authentication to verify age</b> &mdash; the account is held and routed to ID Help. Now log the outcome in Salesforce.";
+  document.getElementById("toSf").disabled=false;
+  document.getElementById("submitHold").disabled=true;
+}
+
+// Stage 4 — Salesforce. Outcome "No Violation Found", Detail none, Account Action "Hold", correct note + typed evidence
+const correct = { outcome:"noviolation", detail:"none", account:"hold" };
+function checkAction(){
+  const o=document.getElementById("f-outcome").value;
+  const d=document.getElementById("f-detail").value;
+  const a=document.getElementById("f-account").value;
+  const evVal=document.getElementById("f-evidence").value;
+  const fb=document.getElementById("actionFb");
+  ["fg-outcome","fg-detail","fg-account","fg-notes"].forEach(id=>document.getElementById(id).classList.remove("bad"));
+
+  if(!o||!a||!picks.sfNote||!evVal.trim()){
+    fb.className="fb no show";
+    fb.innerHTML="Complete the required fields (Outcome, Account Actions, and the Internal Note + evidence) before saving.";
+    return;
+  }
+  const wrong=[];
+  if(o!==correct.outcome){ wrong.push("Outcome"); document.getElementById("fg-outcome").classList.add("bad"); }
+  if(d!==correct.detail){ wrong.push("Outcome Detail"); document.getElementById("fg-detail").classList.add("bad"); }
+  if(a!==correct.account){ wrong.push("Account Actions"); document.getElementById("fg-account").classList.add("bad"); }
+  if(picks.sfNote!=="good" || !evidenceOK()){ wrong.push("Internal Notes"); document.getElementById("fg-notes").classList.add("bad"); }
+
+  if(wrong.length===0){
+    fb.className="fb ok show";
+    fb.innerHTML="<b>Correct.</b> Implicit Minor is Tier 1: Outcome <b>No Violation Found</b>, no Outcome Detail, Account Action <b>Hold</b>, and the note documents the implied age (\u201CI am a teenager\u201D) as evidence. No deletion, no blocklist, no escalation.";
+    document.getElementById("toMc").disabled=false;
+    document.getElementById("submitAction").disabled=true;
+  } else {
+    fb.className="fb no show";
+    let tip="Tip: an <i>implied</i> age isn't a confirmed violation — this is Tier 1, No Violation Found and Hold, not a deletion.";
+    if(picks.sfNote!=="good" || !evidenceOK()){
+      tip="Tip: the note must use the implicit-minor format, and the evidence is the phrase that <i>implies</i> a minor without a stated age &mdash; \u201CI am a teenager.\u201D (\u201CI am 17\u201D would be a stated age = confirmed, not implicit.)";
+    }
+    fb.innerHTML="Not quite — re-check the highlighted "+(wrong.length>1?"fields":"field")+" ("+wrong.join(", ")+"). "+tip;
+  }
+}
+
+// --- tab hint dismissal ---
+function dismissHint(){ const h=document.getElementById("tabHint"); if(h) h.classList.add("gone"); }
+
+// --- clickable browser tabs: jump to the stage each tab represents ---
+document.querySelectorAll(".stage").forEach(stage=>{
+  const stageNum = parseInt(stage.id.replace("stage",""),10);
+  stage.querySelectorAll(".tab").forEach(tab=>{
+    let target = null;
+    if(tab.classList.contains("cmr")) target = 1;
+    else if(tab.classList.contains("eg")) target = 2;
+    else if(tab.classList.contains("admin")) target = 3;
+    else if(tab.classList.contains("sf")) target = 4;
+    if(target){
+      tab.addEventListener("click",()=>{ if(target!==stageNum){ dismissHint(); go(target); } });
+    }
+  });
+});
+</script>
+</body>
+</html>
