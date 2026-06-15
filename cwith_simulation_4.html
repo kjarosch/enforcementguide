@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Apply the Change — Contact Without Intent to Hire Simulation</title>
+<style>
+  :root{
+    --ink:#1a2230; --muted:#5a6b80; --line:#d4dae3; --line-soft:#e8ecf2;
+    --paper:#ffffff; --shell:#eef1f5;
+    --tt-blue:#0074AD; --tt-blue-d:#005199;
+    --warn-bg:#FFEFF0; --warn-line:#FFB080; --warn-text:#790D10;
+    --eg-orange:#FEBE14; --eg-row:#ece6f6; --eg-hold-bg:#FBE8B3; --eg-hold-tx:#a77005; --eg-none-bg:#FDF7E7;
+    --ok:#2DB783; --ok-d:#168558; --ok-bg:#E1FDF3;
+    --field-label:#42526b; --crit:#B22D31;
+    --radius:8px;
+    --mono:"SF Mono",ui-monospace,"Cascadia Code",Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--shell); font-family:var(--sans); color:var(--ink); -webkit-font-smoothing:antialiased; padding:1.5rem;}
+  .frame{max-width:1080px; margin:0 auto;}
+
+  .lh{margin-bottom:1rem;}
+  .lh .eyebrow{font-size:.82rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--tt-blue-d);}
+  .lh h1{font-size:1.7rem; font-weight:700; margin:.25rem 0 .5rem;}
+  .lh p{font-size:1.05rem; line-height:1.55; color:var(--muted); margin:0; max-width:780px;}
+
+  .steps{display:flex; gap:6px; margin:1rem 0 1.25rem; flex-wrap:wrap;}
+  .steps .s{flex:1; min-width:120px; border:1px solid var(--line); border-radius:6px; background:var(--paper); padding:8px 12px; font-size:.82rem; color:var(--muted); display:flex; align-items:center; gap:8px;}
+  .steps .s .n{width:20px; height:20px; border-radius:50%; background:var(--line); color:#fff; display:flex; align-items:center; justify-content:center; font-size:.72rem; font-weight:700; flex:none;}
+  .steps .s.active{border-color:var(--tt-blue); color:var(--ink); font-weight:600;}
+  .steps .s.active .n{background:var(--tt-blue);}
+  .steps .s.done .n{background:var(--ok);}
+
+  .browser{background:var(--paper); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; box-shadow:0 2px 14px rgba(20,40,70,.07);}
+  .tabbar{display:flex; align-items:center; gap:8px; background:#dfe4ea; padding:8px 12px 0;}
+  .tab{background:#eef1f5; border-radius:8px 8px 0 0; padding:8px 14px; font-size:.82rem; color:var(--muted); display:flex; align-items:center; gap:8px; border:1px solid transparent; border-bottom:none; max-width:240px; cursor:pointer; transition:background .1s, box-shadow .1s; position:relative;}
+  .tab:not(.active):hover{background:#f6f8fa; color:var(--tt-blue-d); box-shadow:inset 0 -2px 0 var(--tt-blue);}
+  .tab:not(.active)::after{content:"\21A9"; font-size:.8rem; opacity:0; margin-left:2px; transition:opacity .1s; color:var(--tt-blue);}
+  .tab:not(.active):hover::after{opacity:.8;}
+  .tab.pulse:not(.active){animation:tabpulse 1.6s ease 2;}
+  @keyframes tabpulse{0%,100%{box-shadow:inset 0 -2px 0 transparent;} 50%{box-shadow:inset 0 -3px 0 var(--tt-blue);}}
+
+  .tabhint{display:flex; align-items:center; gap:8px; font-size:.9rem; color:var(--tt-blue-d); background:#E6F1FD; border:1px solid #96C2FF; border-radius:6px; padding:8px 12px; margin-bottom:10px; transition:opacity .3s;}
+  .tabhint.gone{opacity:0; height:0; padding:0; margin:0; border:0; overflow:hidden;}
+  .tabhint .x{margin-left:auto; cursor:pointer; font-weight:700; opacity:.6;}
+  .tabhint .x:hover{opacity:1;}
+  .tab.active{background:var(--paper); color:var(--ink); font-weight:600;}
+  .tab .fav{width:12px; height:12px; border-radius:3px; flex:none;}
+  .tab.cmr .fav{background:var(--tt-blue);} .tab.eg .fav{background:var(--eg-orange);} .tab.admin .fav{background:#1a2230;} .tab.sf .fav{background:#00A1E0;}
+  .urlbar{background:var(--paper); border-bottom:1px solid var(--line); padding:8px 14px; font-family:var(--mono); font-size:.8rem; color:var(--muted); display:flex; align-items:center; gap:10px;}
+  .urlbar .lock{color:var(--ok-d);}
+  .view{min-height:430px;}
+  .admwarn{background:var(--warn-bg); border-bottom:1px solid var(--warn-line); color:var(--warn-text); font-size:.8rem; text-align:center; padding:6px 12px; font-weight:600;}
+  .pad{padding:20px 26px;}
+
+  .req-title{font-size:1.3rem; font-weight:700; color:var(--tt-blue-d); margin:0 0 2px;}
+  .req-sub{font-size:.9rem; color:var(--muted); margin:0 0 16px;}
+  table.req{width:100%; border-collapse:collapse; font-size:.92rem; margin-bottom:6px;}
+  table.req td{padding:7px 10px; vertical-align:top; border-bottom:1px solid var(--line-soft);}
+  table.req td.k{width:200px; text-align:right; color:var(--field-label); font-weight:600;}
+  .msgs{margin-top:6px;}
+  .msg{border:1px solid var(--line-soft); border-radius:8px; padding:11px 14px; margin-bottom:10px; font-size:.95rem; line-height:1.5; background:#fafbfc;}
+  .msg.pro{background:#f4f6f9;}
+  .msg .who{font-size:.78rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin-bottom:4px;}
+  .flag{background:#FBE8B3; padding:0 3px; border-radius:3px;}
+
+  .coach{margin:16px 26px 0; background:#E6F1FD; border:1px solid #96C2FF; border-radius:var(--radius); padding:14px 16px; font-size:.95rem; line-height:1.5; color:#063a63;}
+  .coach b{color:var(--tt-blue-d);}
+
+  .egbar{background:#E1FDF3; border-bottom:1px solid var(--line); font-size:.82rem; color:var(--ok-d); padding:6px 14px;}
+  .egwrap{padding:18px 22px; overflow-x:auto;}
+  table.eg{border-collapse:collapse; font-size:.85rem; width:100%; min-width:820px;}
+  table.eg th{background:#6b6b6b; color:#fff; font-weight:600; padding:8px 10px; text-align:left; border:1px solid #cfd5dd; font-size:.8rem;}
+  table.eg td{padding:7px 10px; border:1px solid #cfd5dd; vertical-align:top;}
+  .eg-titlecell{background:var(--eg-row); font-weight:700; font-size:1rem; width:170px;}
+  .eg-usertype{background:var(--eg-row); width:90px; text-align:center; vertical-align:middle;}
+  .eg-pickkey{font-weight:700; width:90px;}
+  .eg-tier{background:var(--eg-row); text-align:center; font-weight:700; font-size:1.05rem; vertical-align:middle; width:48px;}
+  .eg-none{background:var(--eg-none-bg); color:var(--eg-hold-tx); font-weight:700; text-align:center;}
+  .eg-del{background:#C6F7DA; color:var(--ok-d); font-weight:700; text-align:center;}
+  .eg-no{background:#C6F7DA; color:var(--ok-d); font-weight:700; text-align:center;}
+  tr.eg-target td{outline:2px solid var(--tt-blue); outline-offset:-2px;}
+
+  .form-pad{padding:22px 26px;}
+  .form-pad h3{margin:0 0 4px; font-size:1.15rem;}
+  .form-pad .sub{font-size:.9rem; color:var(--muted); margin:0 0 18px;}
+  .wt-meta{display:flex; gap:24px; flex-wrap:wrap; background:#f4f6f9; border:1px solid var(--line); border-radius:8px; padding:12px 16px; margin-bottom:20px; font-size:.85rem;}
+  .wt-meta div span{display:block; color:var(--muted); font-size:.75rem; text-transform:uppercase; letter-spacing:.04em;}
+  .wt-meta div b{font-size:.95rem;}
+  .fgroup{margin-bottom:16px; max-width:580px;}
+  .fgroup label{display:block; font-size:.85rem; font-weight:600; color:var(--field-label); margin-bottom:5px;}
+  .req-star{color:var(--crit);}
+  .fgroup select, .fgroup input, .fgroup textarea{width:100%; font-family:var(--sans); font-size:.95rem; padding:9px 11px; border:1px solid var(--line); border-radius:6px; background:var(--paper); color:var(--ink);}
+  .fgroup select:focus, .fgroup textarea:focus, .fgroup input:focus{outline:2px solid var(--tt-blue); border-color:var(--tt-blue);}
+  .fgroup.bad select, .fgroup.bad textarea, .fgroup.bad input{border-color:var(--crit);}
+  .fhint{font-size:.8rem; color:var(--muted); margin-top:4px;}
+
+  .actions{display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:8px;}
+  button{font-family:var(--sans); font-size:.95rem; font-weight:600; border-radius:6px; cursor:pointer; border:1px solid transparent; padding:10px 20px; transition:transform .08s,background .12s;}
+  button:active{transform:scale(.98);}
+  button:disabled{opacity:.45; cursor:not-allowed;}
+  .btn-primary{background:var(--tt-blue); color:#fff;}
+  .btn-primary:hover:not(:disabled){background:var(--tt-blue-d);}
+  .btn-ghost{background:var(--paper); color:var(--tt-blue-d); border-color:var(--tt-blue);}
+  .btn-eg{background:var(--eg-orange); color:#5a4500;}
+  .btn-sf{background:#00A1E0; color:#fff;}
+  .btn-danger{background:var(--crit); color:#fff;}
+  .btn-danger:hover:not(:disabled){background:#8e1f23;}
+
+  .fb{margin-top:16px; border-radius:var(--radius); padding:14px 16px; font-size:.95rem; line-height:1.5; display:none;}
+  .fb.show{display:block; animation:fade .25s ease;}
+  .fb.ok{background:var(--ok-bg); border:1px solid var(--ok); color:var(--ok-d);}
+  .fb.no{background:var(--warn-bg); border:1px solid var(--warn-line); color:var(--warn-text);}
+  @keyframes fade{from{opacity:0; transform:translateY(5px);} to{opacity:1; transform:none;}}
+
+  /* shuttle (Available / Chosen) for the TOS Violations picker */
+  .shuttle{display:grid; grid-template-columns:1fr 40px 1fr; gap:8px; align-items:center; max-width:580px;}
+  .shuttle-col{border:1px solid var(--line); border-radius:6px; background:var(--paper); height:160px; overflow-y:auto;}
+  .shuttle-col .shead{background:#f4f6f9; padding:6px 10px; font-size:.78rem; font-weight:700; color:var(--field-label); text-transform:uppercase; letter-spacing:.04em; border-bottom:1px solid var(--line);}
+  .shuttle-col ul{list-style:none; padding:0; margin:0;}
+  .shuttle-col li{padding:7px 10px; font-size:.88rem; cursor:pointer; border-bottom:1px solid var(--line-soft);}
+  .shuttle-col li:hover{background:#E6F1FD;}
+  .shuttle-col li.sel{background:#E6F1FD; color:var(--tt-blue-d); font-weight:600;}
+  .shuttle-mid{display:flex; flex-direction:column; gap:6px; align-items:center;}
+  .shuttle-mid button{padding:4px 8px; font-size:.85rem; min-width:32px;}
+
+  .stage{display:none;}
+  .stage.active{display:block;}
+
+  .recap-head{display:flex; gap:14px; align-items:flex-start; margin-bottom:20px;}
+  .recap-check{flex:none; width:40px; height:40px; border-radius:50%; background:var(--ok); color:#fff; display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:700;}
+  .recap-grid{display:flex; flex-direction:column; gap:0; border:1px solid var(--line); border-radius:var(--radius); overflow:hidden;}
+  .recap-row{display:grid; grid-template-columns:160px 1fr; gap:0;}
+  .recap-row:not(:last-child){border-bottom:1px solid var(--line-soft);}
+  .recap-k{background:#f4f6f9; padding:14px 16px; font-weight:700; font-size:.9rem; color:var(--field-label);}
+  .recap-v{padding:14px 16px; font-size:1rem; line-height:1.5;}
+  @media (max-width:560px){ .recap-row{grid-template-columns:1fr;} .recap-k{border-bottom:1px solid var(--line-soft);} }
+  .nav-foot{display:flex; justify-content:space-between; align-items:center; margin-top:14px;}
+  .nav-foot .progress-label{font-size:.85rem; color:var(--muted);}
+  .nav-foot .right{display:flex; gap:10px;}
+</style>
+</head>
+<body>
+<div class="frame">
+
+  <div class="lh">
+    <span class="eyebrow">Apply the Change &middot; Simulation</span>
+    <h1>Work the case: an off-topic customer in Customer Message Review</h1>
+    <p>You're reviewing a customer message in the CMR queue. Read the thread, look it up in the Enforcement Guide, then take the actions the EG calls for.</p>
+    <p style="margin-top:8px; font-size:.95rem;">Heads up: this is one of the <b>recategorized</b> policies. The old "Test" bucket is gone &mdash; for customers, that concept is now <b>Contact Without Intent to Hire</b> (the pro-side equivalent went to Gibberish Profiles).</p>
+  </div>
+
+  <div class="tabhint" id="tabHint">
+    <span>&#128161;</span>
+    <span>Tip: the browser tabs are clickable &mdash; jump back to the <b>message</b> or the <b>Enforcement Guide</b> anytime, no need to step backward.</span>
+    <span class="x" onclick="dismissHint()" title="Dismiss">&times;</span>
+  </div>
+
+  <div class="steps" id="tracker">
+    <div class="s active"><span class="n">1</span>Read the messages</div>
+    <div class="s"><span class="n">2</span>Find it in the EG</div>
+    <div class="s"><span class="n">3</span>Delete the request</div>
+    <div class="s"><span class="n">4</span>Log it in Salesforce</div>
+  </div>
+
+  <!-- STAGE 1 -->
+  <div class="stage active" id="stage1">
+    <div class="browser">
+      <div class="tabbar">
+        <div class="tab cmr active"><span class="fav"></span>Customer Message Review</div>
+        <div class="tab eg"><span class="fav"></span>Enforcement Guide</div>
+        <div class="tab admin"><span class="fav" style="background:#1a2230;"></span>Admin &mdash; Confirm Delete</div>
+        <div class="tab sf"><span class="fav"></span>Salesforce &mdash; Work Ticket</div>
+      </div>
+      <div class="urlbar"><span class="lock">&#128274;</span>thumbtack.com/admin/requests/request</div>
+      <div class="admwarn">PRACTICE ENVIRONMENT &mdash; fictional case, no production data</div>
+      <div class="view">
+        <div class="pad">
+          <p class="req-title">Handyman (PRACTICE-849217) | Customer: M. Lawson</p>
+          <p class="req-sub">Customer Message Review &middot; Routing: Customer Message Review &middot; Status: New</p>
+          <table class="req">
+            <tr><td class="k">Request category</td><td>Handyman</td></tr>
+            <tr><td class="k">Request intro type</td><td>Availability</td></tr>
+            <tr><td class="k">Pro</td><td>Marcus Handy Co.</td></tr>
+          </table>
+          <div class="msgs">
+            <div class="msg">
+              <div class="who">Customer &middot; M. Lawson</div>
+              What's your next availability?
+            </div>
+            <div class="msg pro">
+              <div class="who">Pro &middot; Marcus Handy Co.</div>
+              Hi, welcome to Marcus Handy Co. Thanks for your message. My minimum visit fee is $160. For larger projects, I offer a fixed price based on the scope of work. Just send me a list of tasks and I'm happy to help!
+            </div>
+            <div class="msg">
+              <div class="who">Customer &middot; M. Lawson</div>
+              <span class="flag">Sorry, I registered and downgraded the wrong thing</span>
+            </div>
+            <div class="msg">
+              <div class="who">Customer &middot; M. Lawson</div>
+              <span class="flag">Tried to figure out the program</span>
+            </div>
+            <div class="msg pro">
+              <div class="who">Pro &middot; Marcus Handy Co.</div>
+              I understand, but it cost me $27.18.
+            </div>
+            <div class="msg">
+              <div class="who">Customer &middot; M. Lawson</div>
+              Is there any guide?
+            </div>
+            <div class="msg pro">
+              <div class="who">Pro &middot; Marcus Handy Co.</div>
+              Yes, the Thumbtack website has a Help Center section with instructions on how to use the app.
+            </div>
+            <div class="msg">
+              <div class="who">Customer &middot; M. Lawson</div>
+              <span class="flag">How do you like the app, is it worth it?</span>
+            </div>
+          </div>
+        </div>
+        <div class="coach">
+          <b>What stands out?</b> The customer never asks for the job to be done. They say they <b>"registered and downgraded the wrong thing,"</b> were <b>"trying to figure out the program,"</b> and end by asking the pro <b>how they like the app</b>. The follow-up messaging makes it clear they <b>never intended to hire a pro</b> &mdash; they're poking around the platform. Look this up in the EG.
+        </div>
+      </div>
+    </div>
+    <div class="nav-foot">
+      <span class="progress-label">Step 1 of 4</span>
+      <button class="btn-eg" onclick="go(2)">Open the Enforcement Guide &rarr;</button>
+    </div>
+  </div>
+
+  <!-- STAGE 2 -->
+  <div class="stage" id="stage2">
+    <div class="browser">
+      <div class="tabbar">
+        <div class="tab cmr"><span class="fav"></span>Customer Message Review</div>
+        <div class="tab eg active"><span class="fav"></span>Enforcement Guide</div>
+        <div class="tab admin"><span class="fav" style="background:#1a2230;"></span>Admin &mdash; Confirm Delete</div>
+        <div class="tab sf"><span class="fav"></span>Salesforce &mdash; Work Ticket</div>
+      </div>
+      <div class="urlbar"><span class="lock">&#128274;</span>docs.google.com/spreadsheets &middot; Enforcement Guide &middot; <b>CMR</b> tab</div>
+      <div class="view">
+        <div class="egwrap">
+          <table class="eg">
+            <tr>
+              <th>Title</th><th>User Type</th><th colspan="2">Picklist</th><th>Required Comments</th><th>Tier</th>
+              <th>Request</th><th>Admin Action</th><th>Blocklist</th>
+            </tr>
+            <tr class="eg-target">
+              <td class="eg-titlecell" rowspan="4">Contact Without Intent to Hire</td>
+              <td class="eg-usertype" rowspan="4">Customer</td>
+              <td class="eg-pickkey">REQUEST:</td><td>Not a Service</td><td>WT #, Describe violation</td>
+              <td class="eg-tier" rowspan="4">1</td>
+              <td class="eg-del" rowspan="4">Delete<br>Manual</td>
+              <td class="eg-none" rowspan="4">None</td>
+              <td class="eg-no" rowspan="4">No</td>
+            </tr>
+            <tr class="eg-target"><td class="eg-pickkey">TACK:</td><td>Confirmed Violation | TOS Violation | Not a Service</td><td>Describe violation</td></tr>
+            <tr class="eg-target"><td class="eg-pickkey">ADMIN:</td><td>N/A</td><td>N/A</td></tr>
+            <tr class="eg-target"><td class="eg-pickkey">BLIST:</td><td>N/A</td><td>N/A</td></tr>
+          </table>
+          <div style="margin-top:14px; font-size:.85rem; color:var(--muted);">
+            <b style="color:var(--ink);">Definition (from the Enforcement Criteria tab):</b> Customer requests that obviously never had the intent to hire the pro.
+            <br><b style="color:var(--ink);">Identification criteria include:</b> the customer's job request, follow-up messaging, or other account information indicates they never intended to hire any pro on Thumbtack; requests that contain feedback for Thumbtack; requests that are gibberish or unrelated to hiring a pro; requests for jobs more than 2 years in the future.
+            <br><b style="color:var(--ink);">Similar Policies:</b> Competitor Contact Abuse, Promoting Competitor Services.
+          </div>
+        </div>
+        <div class="coach">
+          <b>Read the row.</b> Tier 1: delete the request as <b>Not a Service</b>. The tack string is <b>Confirmed Violation | TOS Violation | Not a Service</b>.
+        </div>
+      </div>
+    </div>
+    <div class="nav-foot">
+      <span class="progress-label">Step 2 of 4</span>
+      <div class="right">
+        <button class="btn-ghost" onclick="go(1)">&larr; Back to message</button>
+        <button class="btn-primary" onclick="go(3)">Go to Confirm Delete &rarr;</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STAGE 3: CONFIRM DELETE (legacy admin) -->
+  <div class="stage" id="stage3">
+    <div class="browser">
+      <div class="tabbar">
+        <div class="tab cmr"><span class="fav"></span>Customer Message Review</div>
+        <div class="tab eg"><span class="fav"></span>Enforcement Guide</div>
+        <div class="tab admin active"><span class="fav" style="background:#1a2230;"></span>Admin &mdash; Confirm Delete</div>
+        <div class="tab sf"><span class="fav"></span>Salesforce &mdash; Work Ticket</div>
+      </div>
+      <div class="urlbar"><span class="lock">&#128274;</span>thumbtack.com/admin/deletion/confirm?action=delete&amp;req=PRACTICE-849217</div>
+      <div class="admwarn">PRACTICE ENVIRONMENT &mdash; fictional case, no production data</div>
+      <div class="view">
+        <div class="form-pad">
+          <h3 style="color:var(--crit);">Confirm Delete</h3>
+          <p class="sub"><b>Request:</b> Handyman (PRACTICE-849217)</p>
+
+          <div class="fgroup" id="fg-delreason">
+            <label for="f-delreason">Delete Reason <span class="req-star">*</span></label>
+            <select id="f-delreason">
+              <option value="">Select…</option>
+              <option value="nas">Not a service</option>
+              <option value="nats">Not a Thumbtack service</option>
+              <option value="competitor">Competitor contact abuse</option>
+              <option value="seeking">Seeking employment or partnership</option>
+              <option value="minor1317">Minor User - 13-17</option>
+              <option value="qname">Questionable name</option>
+            </select>
+          </div>
+
+          <div class="fgroup" id="fg-delwt">
+            <label for="f-delwt">Salesforce ticket number <span style="color:var(--muted); font-weight:400;">(optional)</span></label>
+            <input type="text" id="f-delwt" placeholder="WT-#########">
+            <p class="fhint">Grab the work ticket number from the Salesforce tab.</p>
+          </div>
+
+          <div class="fgroup" id="fg-delnotes">
+            <label for="f-delnotes">Notes <span class="req-star">*</span></label>
+            <textarea id="f-delnotes" rows="3" placeholder="WT-30889451, describe the violation using evidence from the customer's messages"></textarea>
+            <p class="fhint">EG required comment for REQUEST: <b>WT #, Describe violation</b>. Quote the part of the customer's messages that shows they had no intent to hire.</p>
+          </div>
+
+          <div class="actions">
+            <button class="btn-ghost" onclick="go(2)">&larr; Re-check the EG</button>
+            <button class="btn-danger" id="submitDelete" onclick="checkDelete()">Confirm</button>
+          </div>
+          <div class="fb" id="delFb"></div>
+        </div>
+      </div>
+    </div>
+    <div class="nav-foot">
+      <span class="progress-label">Step 3 of 4</span>
+      <button class="btn-primary" id="toSf" onclick="go(4)" disabled>Continue to Salesforce &rarr;</button>
+    </div>
+  </div>
+
+  <!-- STAGE 4: SALESFORCE WORK TICKET -->
+  <div class="stage" id="stage4">
+    <div class="browser">
+      <div class="tabbar">
+        <div class="tab cmr"><span class="fav"></span>Customer Message Review</div>
+        <div class="tab eg"><span class="fav"></span>Enforcement Guide</div>
+        <div class="tab admin"><span class="fav" style="background:#1a2230;"></span>Admin &mdash; Confirm Delete</div>
+        <div class="tab sf active"><span class="fav"></span>Salesforce &mdash; Work Ticket</div>
+      </div>
+      <div class="urlbar"><span class="lock">&#128274;</span>thumbtack.lightning.force.com/lightning/r/WorkTicket</div>
+      <div class="view">
+        <div class="form-pad">
+          <h3>Work Ticket — log the outcome</h3>
+          <p class="sub">Now record the outcome on the Salesforce work ticket. Match each field to the EG <b>tack</b> picklist row.</p>
+
+          <div class="wt-meta">
+            <div><span>Work Ticket #</span><b>WT-30889451</b></div>
+            <div><span>Routing</span><b>Customer Message Review</b></div>
+            <div><span>Account</span><b>M. Lawson (PRACTICE-849217)</b></div>
+          </div>
+
+          <div class="fgroup" id="fg-outcome">
+            <label for="f-outcome">Outcome <span class="req-star">*</span></label>
+            <select id="f-outcome">
+              <option value="">--None--</option>
+              <option value="noviolation">No Violation Found</option>
+              <option value="confirmed">Confirmed Violation</option>
+            </select>
+          </div>
+
+          <div class="fgroup" id="fg-detail">
+            <label for="f-detail">Outcome Detail <span class="req-star">*</span></label>
+            <select id="f-detail">
+              <option value="">--None--</option>
+              <option value="tos">TOS Violation</option>
+            </select>
+          </div>
+
+          <div class="fgroup" id="fg-tos">
+            <label>TOS Violations <span class="req-star">*</span></label>
+            <p class="fhint" style="margin-top:0;margin-bottom:8px;">Move the correct violation from <b>Available</b> to <b>Chosen</b>.</p>
+            <div class="shuttle">
+              <div class="shuttle-col">
+                <div class="shead">Available</div>
+                <ul id="tosAvail">
+                  <li data-v="barter">Barter or Free Service</li>
+                  <li data-v="cca">Competitor Contact Abuse</li>
+                  <li data-v="discrim">Discrimination</li>
+                  <li data-v="incon">Inappropriate Content/Language</li>
+                  <li data-v="nonus">Non-US Service Location</li>
+                  <li data-v="nats">Not a Thumbtack Service</li>
+                  <li data-v="nas">Not a Service</li>
+                  <li data-v="english">Not in English</li>
+                  <li data-v="qname">Questionable Name</li>
+                </ul>
+              </div>
+              <div class="shuttle-mid">
+                <button type="button" class="btn-ghost" onclick="shuttleMove('right')" title="Move to Chosen">&rarr;</button>
+                <button type="button" class="btn-ghost" onclick="shuttleMove('left')" title="Move to Available">&larr;</button>
+              </div>
+              <div class="shuttle-col">
+                <div class="shead">Chosen</div>
+                <ul id="tosChosen"></ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="fgroup" id="fg-account">
+            <label for="f-account">Admin Actions &middot; Account Actions <span class="req-star">*</span></label>
+            <select id="f-account">
+              <option value="">Select…</option>
+              <option value="none">No Action</option>
+              <option value="hold">Hold</option>
+              <option value="delete">Delete</option>
+              <option value="ghost">Ghost</option>
+            </select>
+          </div>
+
+          <div class="fgroup" id="fg-notes">
+            <label for="f-notes">Internal Notes <span class="req-star">*</span></label>
+            <textarea id="f-notes" rows="3" placeholder="Describe the violation. Quote the customer's messages."></textarea>
+            <p class="fhint">Describe violation. Include the evidence from the customer's messages.</p>
+          </div>
+
+          <div class="actions">
+            <button class="btn-ghost" onclick="go(3)">&larr; Back to Confirm Delete</button>
+            <button class="btn-sf" id="submitAction" onclick="checkAction()">Save work ticket</button>
+          </div>
+          <div class="fb" id="actionFb"></div>
+        </div>
+      </div>
+    </div>
+    <div class="nav-foot">
+      <span class="progress-label">Step 4 of 4</span>
+      <button class="btn-primary" id="toMc" onclick="go(5)" disabled>See recap &rarr;</button>
+    </div>
+  </div>
+
+  <!-- STAGE 5: RECAP -->
+  <div class="stage" id="stage5">
+    <div class="browser" style="box-shadow:none;">
+      <div class="view" style="min-height:auto;">
+        <div class="pad">
+          <div class="recap-head">
+            <span class="recap-check">&#10003;</span>
+            <div>
+              <h3 style="margin:0 0 4px; font-size:1.35rem;">Case complete &mdash; you handled a Contact Without Intent to Hire case correctly</h3>
+              <p style="margin:0; color:var(--muted); font-size:1rem;">Here's what you did, and why it matters on the floor.</p>
+            </div>
+          </div>
+
+          <div class="recap-grid">
+            <div class="recap-row"><span class="recap-k">The signal</span><span class="recap-v">Customer's follow-up messaging made the intent obvious: <i>"registered and downgraded the wrong thing,"</i> <i>"tried to figure out the program,"</i> <i>"how do you like the app, is it worth it?"</i> &mdash; the request wasn't actually about hiring a handyman.</span></div>
+            <div class="recap-row"><span class="recap-k">Violation</span><span class="recap-v">Contact Without Intent to Hire &mdash; <b>Tier 1</b>.</span></div>
+            <div class="recap-row"><span class="recap-k">Confirm Delete</span><span class="recap-v">Delete Reason <b>Not a service</b>, Notes referencing WT-30889451 with the evidence from the customer's messages.</span></div>
+            <div class="recap-row"><span class="recap-k">Salesforce</span><span class="recap-v">Outcome <b>Confirmed Violation</b>, Outcome Detail <b>TOS Violation</b>, TOS Violation chosen <b>Not a Service</b>, Account Action <b>No Action</b>. Internal Notes describe the violation with evidence from the customer's messages.</span></div>
+            <div class="recap-row"><span class="recap-k">What changed</span><span class="recap-v">The old <b>"Test"</b> category is gone. For <b>customers</b>, that concept is now Contact Without Intent to Hire (this case). For <b>pros</b>, the equivalent is <b>Gibberish Profiles</b> &mdash; a profile that doesn't represent a real service offering.</span></div>
+            <div class="recap-row"><span class="recap-k">Not this</span><span class="recap-v">No account deletion (it's request-level), no admin action, no blocklist, no escalation. A customer who places a legitimate request and just doesn't follow up is <b>not</b> a violation &mdash; the difference here is the follow-up <i>proves</i> there was never intent to hire.</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="nav-foot">
+      <span class="progress-label">Recap</span>
+      <button class="btn-ghost" onclick="go(4)">&larr; Back to work ticket</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const pulsedStages = new Set();
+function go(n){
+  document.querySelectorAll(".stage").forEach(s=>s.classList.remove("active"));
+  const cur=document.getElementById("stage"+n);
+  cur.classList.add("active");
+  document.querySelectorAll("#tracker .s").forEach((s,idx)=>{
+    s.classList.toggle("active", idx===n-1);
+    s.classList.toggle("done", idx<n-1);
+  });
+  if((n===3||n===4) && !pulsedStages.has(n)){
+    pulsedStages.add(n);
+    cur.querySelectorAll(".tab:not(.active)").forEach(t=>{
+      t.classList.add("pulse");
+      setTimeout(()=>t.classList.remove("pulse"), 3400);
+    });
+  }
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+// normalize for fair matching: trim, collapse spaces, lowercase, strip surrounding punctuation/quotes
+function norm(s){
+  return (s||"")
+    .trim()
+    .replace(/\s+/g," ")
+    .replace(/[\u201C\u201D\u2018\u2019]/g,'"')
+    .replace(/[^a-zA-Z0-9 |\-]/g," ")
+    .replace(/\s+/g," ")
+    .toLowerCase();
+}
+// Acceptable evidence phrases drawn from the customer's messages in the case.
+// Any one is sufficient (lenient match).
+const EVIDENCE_PHRASES = [
+  "registered and downgraded",
+  "downgraded the wrong thing",
+  "figure out the program",
+  "how do you like the app",
+  "is it worth it",
+  "trying out",
+  "no intent to hire",
+  "never intended to hire",
+  "did not intend to hire",
+  "didn't intend to hire"
+];
+function hasEvidence(s){
+  const n = norm(s);
+  return EVIDENCE_PHRASES.some(p => n.includes(norm(p)));
+}
+// Acceptable TACK-string variants (pipes optional, dashes ok, lenient spacing)
+function hasTackString(s){
+  const n = norm(s);
+  return n.includes("confirmed violation")
+      && n.includes("tos violation")
+      && n.includes("not a service");
+}
+
+// Stage 3 — Confirm Delete. EG REQUEST: "Not a Service", Required Comment: "WT #, Describe violation"
+function checkDelete(){
+  const r=document.getElementById("f-delreason").value;
+  const wtVal=document.getElementById("f-delwt").value;
+  const noteVal=document.getElementById("f-delnotes").value;
+  const fb=document.getElementById("delFb");
+  ["fg-delreason","fg-delwt","fg-delnotes"].forEach(id=>document.getElementById(id).classList.remove("bad"));
+
+  if(!r || !noteVal.trim()){
+    fb.className="fb no show";
+    fb.innerHTML="Choose a Delete Reason and add the required notes before confirming.";
+    if(!r) document.getElementById("fg-delreason").classList.add("bad");
+    if(!noteVal.trim()) document.getElementById("fg-delnotes").classList.add("bad");
+    return;
+  }
+
+  const wrong=[];
+  if(r!=="nas"){ wrong.push("Delete Reason"); document.getElementById("fg-delreason").classList.add("bad"); }
+  // WT# must appear somewhere — either the ticket-number field or the notes
+  const wtRegex = /\b30889451\b/;
+  const wtInField = wtRegex.test(wtVal);
+  const wtInNotes = wtRegex.test(noteVal);
+  const includesWT = wtInField || wtInNotes;
+  const includesEv = hasEvidence(noteVal);
+  if(!includesWT){
+    wrong.push("Work ticket #");
+    if(!wtInField) document.getElementById("fg-delwt").classList.add("bad");
+  }
+  if(!includesEv){
+    wrong.push("Notes"); document.getElementById("fg-delnotes").classList.add("bad");
+  }
+
+  if(wrong.length){
+    fb.className="fb no show";
+    if(wrong.length===1 && wrong[0]==="Notes"){
+      fb.innerHTML="The notes need a piece of evidence from the customer's messages &mdash; e.g. <i>\u201Cregistered and downgraded the wrong thing\u201D</i> or <i>\u201Ctried to figure out the program.\u201D</i>";
+    } else if(wrong.length===1 && wrong[0]==="Work ticket #"){
+      fb.innerHTML="The work ticket number needs to be documented &mdash; add <b>WT-30889451</b> to the ticket-number field (or include it in the notes).";
+    } else {
+      fb.innerHTML="Not quite &mdash; re-check the highlighted fields. For Contact Without Intent to Hire the Delete Reason is <b>Not a service</b>, and the EG required comment is <b>WT #, Describe violation</b>.";
+    }
+    return;
+  }
+
+  fb.className="fb ok show";
+  fb.innerHTML="<b>Request deleted.</b> Delete Reason <b>Not a service</b>, the work ticket # is documented, and the notes describe the violation with evidence. Now log the outcome in Salesforce.";
+  document.getElementById("toSf").disabled=false;
+  document.getElementById("submitDelete").disabled=true;
+}
+
+// --- TOS Violations shuttle ---
+let selectedTosItem = null;
+function wireShuttle(){
+  document.querySelectorAll("#tosAvail li, #tosChosen li").forEach(li=>{
+    li.addEventListener("click",()=>{
+      document.querySelectorAll("#tosAvail li, #tosChosen li").forEach(o=>o.classList.remove("sel"));
+      li.classList.add("sel");
+      selectedTosItem = li;
+    });
+  });
+}
+function shuttleMove(dir){
+  if(!selectedTosItem) return;
+  const inAvail = selectedTosItem.parentElement.id === "tosAvail";
+  if(dir==="right" && inAvail){
+    document.getElementById("tosChosen").appendChild(selectedTosItem);
+  } else if(dir==="left" && !inAvail){
+    document.getElementById("tosAvail").appendChild(selectedTosItem);
+  }
+}
+function chosenTosValues(){
+  return [...document.querySelectorAll("#tosChosen li")].map(li=>li.dataset.v);
+}
+wireShuttle();
+
+// Stage 4 — Salesforce. EG TACK: "Confirmed Violation | TOS Violation | Not a Service", ADMIN: N/A (No Action)
+const correct = { outcome:"confirmed", detail:"tos", account:"none", tos:"nas" };
+function checkAction(){
+  const o=document.getElementById("f-outcome").value;
+  const d=document.getElementById("f-detail").value;
+  const a=document.getElementById("f-account").value;
+  const chosen=chosenTosValues();
+  const notesVal=document.getElementById("f-notes").value;
+  const fb=document.getElementById("actionFb");
+  ["fg-outcome","fg-detail","fg-account","fg-tos","fg-notes"].forEach(id=>document.getElementById(id).classList.remove("bad"));
+
+  if(!o||!d||!a||chosen.length===0||!notesVal.trim()){
+    fb.className="fb no show";
+    fb.innerHTML="Complete the required fields (Outcome, Outcome Detail, TOS Violation, Account Actions, and Internal Notes) before saving.";
+    if(!o) document.getElementById("fg-outcome").classList.add("bad");
+    if(!d) document.getElementById("fg-detail").classList.add("bad");
+    if(!a) document.getElementById("fg-account").classList.add("bad");
+    if(chosen.length===0) document.getElementById("fg-tos").classList.add("bad");
+    if(!notesVal.trim()) document.getElementById("fg-notes").classList.add("bad");
+    return;
+  }
+
+  const wrong=[];
+  if(o!==correct.outcome){ wrong.push("Outcome"); document.getElementById("fg-outcome").classList.add("bad"); }
+  if(d!==correct.detail){ wrong.push("Outcome Detail"); document.getElementById("fg-detail").classList.add("bad"); }
+  if(a!==correct.account){ wrong.push("Account Actions"); document.getElementById("fg-account").classList.add("bad"); }
+  if(chosen.length!==1 || chosen[0]!==correct.tos){ wrong.push("TOS Violation"); document.getElementById("fg-tos").classList.add("bad"); }
+
+  const evOK = hasEvidence(notesVal);
+  if(!evOK){
+    wrong.push("Internal Notes"); document.getElementById("fg-notes").classList.add("bad");
+  }
+
+  if(wrong.length===0){
+    fb.className="fb ok show";
+    fb.innerHTML="<b>Correct.</b> Contact Without Intent to Hire is Tier 1: Outcome <b>Confirmed Violation</b>, Outcome Detail <b>TOS Violation</b>, TOS Violation <b>Not a Service</b>, Account Action <b>No Action</b>. The note documents the evidence from the customer's messages.";
+    document.getElementById("toMc").disabled=false;
+    document.getElementById("submitAction").disabled=true;
+  } else {
+    fb.className="fb no show";
+    let tip="";
+    if(wrong.includes("Internal Notes")){
+      tip=" Add evidence from the customer's messages &mdash; e.g. <i>\u201Cregistered and downgraded the wrong thing,\u201D</i> <i>\u201Ctried to figure out the program,\u201D</i> or <i>\u201Chow do you like the app, is it worth it?\u201D</i>";
+    } else {
+      tip=" Re-read the EG row: REQUEST is deleted as <b>Not a Service</b>, tack is <b>Confirmed Violation | TOS Violation | Not a Service</b>, ADMIN is <b>N/A</b> (No Action).";
+    }
+    fb.innerHTML="Not quite &mdash; re-check the highlighted "+(wrong.length>1?"fields":"field")+" ("+wrong.join(", ")+")."+tip;
+  }
+}
+
+function dismissHint(){ const h=document.getElementById("tabHint"); if(h) h.classList.add("gone"); }
+
+// clickable browser tabs across all stages
+document.querySelectorAll(".stage").forEach(stage=>{
+  const stageNum = parseInt(stage.id.replace("stage",""),10);
+  stage.querySelectorAll(".tab").forEach(tab=>{
+    let target = null;
+    if(tab.classList.contains("cmr")) target = 1;
+    else if(tab.classList.contains("eg")) target = 2;
+    else if(tab.classList.contains("admin")) target = 3;
+    else if(tab.classList.contains("sf")) target = 4;
+    if(target){
+      tab.addEventListener("click",()=>{ if(target!==stageNum){ dismissHint(); go(target); } });
+    }
+  });
+});
+</script>
+</body>
+</html>
