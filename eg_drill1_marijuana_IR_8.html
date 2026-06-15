@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EG Navigation Drill — Marijuana Exposure</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f3f4f6;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:0.75rem 0.5rem;}
+.outer{width:100%;max-width:1100px;}
+.card{background:#fff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.07);}
+
+/* ── Scenario bar ── */
+.question-box{background:#1e3a8a;color:#fff;padding:12px 16px;}
+.queue-label{font-size:11.5px;font-weight:500;opacity:.7;margin-bottom:3px;letter-spacing:.06em;text-transform:uppercase;}
+.question-box h2{font-size:15px;font-weight:600;line-height:1.5;margin-bottom:5px;}
+.direction{display:flex;align-items:flex-start;gap:9px;margin-top:7px;background:rgba(255,255,255,.1);border-radius:6px;padding:9px 12px;}
+.direction p{font-size:13.5px;line-height:1.55;opacity:.95;}
+.direction ol{font-size:13.5px;line-height:1.7;opacity:.95;padding-left:16px;}
+
+/* ── Tab chrome ── */
+.tab-switcher{display:flex;gap:0;border-bottom:2px solid #e5e7eb;background:#f9fafb;padding:0 12px;}
+.tab-btn{padding:8px 16px;font-size:13.5px;font-weight:600;color:#6b7280;background:none;border:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:color .15s;white-space:nowrap;}
+.tab-btn:hover{color:#374151;}
+.tab-btn.active{color:#1d4ed8;border-bottom-color:#1d4ed8;}
+.tab-btn.active.ir-active{color:#166534;border-bottom-color:#166534;}
+.tab-pane{display:none;}
+.tab-pane.active{display:block;}
+
+/* ── Google Sheets shell ── */
+.gs-shell{background:#fff;overflow-x:auto;}
+.gs-formulabar{background:#f8f9fa;border-bottom:1px solid #dadce0;padding:3px 10px;display:flex;align-items:center;gap:8px;min-height:26px;}
+.gs-cellref{font-size:12.5px;color:#3c4043;background:#fff;border:1px solid #dadce0;border-radius:2px;padding:2px 6px;min-width:52px;text-align:center;}
+.gs-fx{font-size:13px;color:#5f6368;font-family:'Courier New',monospace;}
+.gs-grid{width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:13px;min-width:680px;}
+.gs-grid th{background:#f8f9fa;color:#444;font-weight:400;padding:0 8px;border:1px solid #e0e0e0;height:22px;text-align:center;position:sticky;top:0;z-index:2;font-size:12px;}
+.gs-grid th.row-num{width:26px;background:#f8f9fa;}
+.gs-grid td{border:1px solid #e0e0e0;padding:3px 7px;height:22px;white-space:nowrap;overflow:hidden;color:#202124;vertical-align:middle;cursor:default;}
+.gs-grid td.row-num{background:#f8f9fa;text-align:center;color:#666;font-size:12px;width:26px;}
+.gs-grid tr:hover td:not(.row-num){background:#f8fbff;}
+.gs-grid td.text-wrap{white-space:normal;height:auto;line-height:1.45;}
+
+/* Category colors */
+.cat-user-safety{background:#f4cccc !important;}
+.cat-discrimination{background:#fce5cd !important;}
+.cat-deceptive{background:#d9ead3 !important;}
+.cat-platform{background:#cfe2f3 !important;}
+.subcat-cell{background:#ffe599 !important;}
+
+/* Tiers */
+.tier-4{color:#cc0000;font-weight:600;}
+.tier-3{color:#e69138;font-weight:600;}
+.tier-2{color:#38761d;font-weight:600;}
+.tier-1{color:#1155cc;font-weight:600;}
+
+/* Clickable links inside cells */
+.eg-link{color:#1155cc;text-decoration:underline;cursor:pointer;font-size:inherit;}
+.eg-link:hover{color:#1d4ed8;background:#e8f0fe;border-radius:2px;}
+.eg-link.green{color:#166534;}
+.eg-link.green:hover{background:#e6f4ea;}
+
+/* EC column widths */
+.gs-grid td.col-title{font-weight:600;min-width:115px;}
+.gs-grid td.col-def{white-space:normal;max-width:200px;line-height:1.45;font-size:12.5px;}
+.gs-grid td.col-crit{white-space:normal;max-width:180px;line-height:1.45;font-size:12.5px;}
+.gs-grid td.col-ex{white-space:normal;max-width:150px;line-height:1.4;font-size:12px;}
+.gs-grid td.col-excl{white-space:normal;max-width:150px;line-height:1.4;font-size:12px;}
+.gs-grid td.col-sim{white-space:normal;max-width:90px;font-size:12px;}
+.gs-grid td.col-queue{white-space:normal;max-width:115px;font-size:12px;line-height:1.6;}
+
+/* IR table — real sheet visual style */
+.ir-block-a td:not(.row-num){background:#dce9f5 !important;}
+.ir-block-b td:not(.row-num){background:#c9dff0 !important;}
+.ir-block-a td.ir-title,.ir-block-b td.ir-title{background:#b8d0e8 !important;font-size:13.5px;font-weight:700;color:#000;vertical-align:middle;white-space:normal;line-height:1.4;padding:4px 7px;}
+.cell-delete{background:#f4cccc !important;font-weight:600;text-align:center;white-space:normal;font-size:12px;}
+.cell-none{text-align:center;color:#444;font-size:12px;}
+.cell-no-action{background:#d9ead3 !important;text-align:center;font-weight:600;font-size:12px;}
+.cell-yes{background:#f4cccc !important;font-weight:600;text-align:center;font-size:12px;white-space:normal;}
+.cell-no{text-align:center;color:#444;font-size:12px;}
+.cell-escalate{background:#f4cccc !important;font-size:11.5px;white-space:normal;line-height:1.3;font-weight:600;text-align:center;}
+.cell-no-esc{text-align:center;color:#444;font-size:12px;}
+.cell-tier{font-weight:700;text-align:center;font-size:13.5px;}
+
+/* Sheet tab bar */
+.gs-tabs{background:#f1f3f4;border-top:1px solid #e0e0e0;display:flex;align-items:flex-end;padding:0 0 0 4px;height:32px;overflow-x:auto;gap:0;}
+.gs-tab{font-size:12.5px;padding:0 13px;height:28px;display:flex;align-items:center;border:1px solid #e0e0e0;border-bottom:none;border-radius:4px 4px 0 0;cursor:pointer;white-space:nowrap;color:#5f6368;background:#e8eaed;margin-right:2px;}
+.gs-tab.active-tab{background:#fff;color:#1a73e8;font-weight:600;border-color:#dadce0;}
+.gs-tab.active-tab.ir-tab{color:#166534;}
+.gs-tab:hover:not(.active-tab){background:#f8f9fa;}
+
+/* ── Progress strip ── */
+.progress-strip{display:flex;align-items:center;gap:10px;padding:8px 16px;background:#f9fafb;border-top:1px solid #e5e7eb;font-size:13px;color:#6b7280;}
+.step{display:flex;align-items:center;gap:5px;}
+.step-dot{width:20px;height:20px;border-radius:50%;border:2px solid #d1d5db;background:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#9ca3af;flex-shrink:0;}
+.step-dot.done{background:#166534;border-color:#166534;color:#fff;}
+.step-dot.active{background:#1d4ed8;border-color:#1d4ed8;color:#fff;}
+.step-label{color:#6b7280;}
+.step-label.active{color:#1d4ed8;font-weight:600;}
+.step-label.done{color:#166534;}
+.step-arrow{color:#d1d5db;font-size:11px;}
+
+/* ── MC panel ── */
+.mc-panel{border-top:2px solid #e5e7eb;padding:18px 16px;}
+.mc-locked{display:flex;align-items:center;gap:12px;padding:16px 18px;background:#f9fafb;border-radius:8px;border:1.5px dashed #d1d5db;color:#9ca3af;font-size:14px;}
+.mc-locked svg{flex-shrink:0;opacity:.5;}
+.mc-q{font-size:15.5px;font-weight:600;color:#111827;margin-bottom:14px;line-height:1.5;}
+.mc-opts{display:flex;flex-direction:column;gap:10px;}
+.mc-opt{display:flex;align-items:flex-start;gap:12px;border:1.5px solid #e5e7eb;border-radius:8px;padding:13px 15px;cursor:pointer;font-size:14px;color:#374151;line-height:1.55;transition:border-color .15s,background .15s;}
+.mc-opt:hover{border-color:#1d4ed8;background:#f5f9ff;}
+.mc-opt .radio{flex-shrink:0;width:18px;height:18px;border-radius:50%;border:2px solid #d1d5db;margin-top:2px;display:flex;align-items:center;justify-content:center;}
+.mc-opt.selected-correct{border-color:#166534;background:#f0fdf4;}
+.mc-opt.selected-correct .radio{border-color:#166534;background:#166534;}
+.mc-opt.selected-correct .radio::after{content:'';width:8px;height:8px;background:#fff;border-radius:50%;}
+.mc-opt.selected-wrong{border-color:#dc2626;background:#fef2f2;}
+.mc-opt.selected-wrong .radio{border-color:#dc2626;}
+.mc-opt.locked{pointer-events:none;}
+.mc-feedback{margin-top:10px;padding:12px 15px;border-radius:8px;font-size:14px;line-height:1.5;display:none;}
+.mc-feedback.correct{background:#f0fdf4;color:#14532d;border:1px solid #bbf7d0;}
+.mc-feedback.wrong{background:#fef2f2;color:#991b1b;border:1px solid #fecaca;}
+.mc-reason{margin-top:9px;padding:10px 12px;background:#f9fafb;border-radius:6px;font-size:13px;color:#374151;line-height:1.5;border:1px solid #e5e7eb;display:none;}
+.retry-btn{margin-top:12px;background:#1d4ed8;color:#fff;border:none;border-radius:8px;padding:10px 24px;font-size:14px;font-weight:600;cursor:pointer;}
+.retry-btn:hover{background:#1e40af;}
+
+/* ── Done screen ── */
+.donescreen{padding:2.5rem 1.5rem;text-align:center;}
+.doneicon{width:52px;height:52px;background:#dcfce7;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:24px;}
+.donescreen h3{font-size:21px;font-weight:600;color:#111827;margin-bottom:8px;}
+.donescreen p{font-size:14.5px;color:#6b7280;line-height:1.6;max-width:560px;margin:0 auto 22px;}
+.replay-btn{background:#fff;border:1px solid #d1d5db;border-radius:8px;padding:10px 24px;font-size:14px;font-weight:600;color:#374151;cursor:pointer;}
+.replay-btn:hover{background:#f9fafb;}
+</style>
+</head>
+<body>
+<div class="outer">
+<div class="card">
+
+  <!-- ══ Scenario ══ -->
+  <div class="question-box">
+    <div class="queue-label">Image Review</div>
+    <h2>A pro's uploaded profile image shows a cannabis leaf. What's the violation, tier, and enforcement action?</h2>
+    <div class="direction">
+      <p><ol>
+        <li>Start in the <strong>Navigation tab</strong> — find the violation and note its tier.</li>
+        <li>Go to <strong>Enforcement Criteria</strong> — read the full definition and applicable queues.</li>
+        <li>Go to <strong>Image Review (IR)</strong> — find the exact picklist and action. The question will appear.</li>
+      </ol></p>
+    </div>
+  </div>
+
+  <!-- ══ Tab switcher ══ -->
+  <div class="tab-switcher">
+    <button class="tab-btn active" id="tbtn-nav" onclick="showTab('nav')">Navigation</button>
+    <button class="tab-btn" id="tbtn-ec" onclick="showTab('ec')">Enforcement Criteria</button>
+    <button class="tab-btn" id="tbtn-ir" onclick="showTab('ir')">Image Review (IR)</button>
+  </div>
+
+  <!-- ══ NAVIGATION tab ══ -->
+  <div class="tab-pane active" id="tab-nav">
+    <div class="gs-shell">
+      <div class="gs-formulabar"><span class="gs-cellref">A1</span><span class="gs-fx">fx</span></div>
+      <div style="overflow-x:auto;max-height:420px;overflow-y:auto;">
+      <table class="gs-grid">
+        <thead><tr>
+          <th class="row-num"></th>
+          <th style="width:160px;">A — Category</th>
+          <th style="width:175px;">B — Sub-Category</th>
+          <th style="width:230px;">C — Violation</th>
+          <th style="width:60px;">D — Tier</th>
+          <th style="width:260px;">E</th>
+        </tr></thead>
+        <tbody>
+          <tr><td class="row-num">1</td><td style="background:#434343;color:#fff;font-weight:600;">Category</td><td style="background:#434343;color:#fff;font-weight:600;">Sub-Category</td><td style="background:#434343;color:#fff;font-weight:600;">Violation</td><td style="background:#434343;color:#fff;font-weight:600;">Tier</td><td style="background:#434343;color:#fff;font-size:11px;white-space:normal;"></td></tr>
+          <tr><td class="row-num">2</td><td rowspan="13" class="cat-user-safety" style="font-weight:700;vertical-align:middle;text-align:center;">User Safety</td><td rowspan="4" class="subcat-cell" style="vertical-align:middle;">Safety Threats</td><td><span class="eg-link" onclick="goToEC('violent-harm')">Violent Harm</span></td><td class="tier-4">4+</td><td rowspan="13" style="white-space:normal;font-size:11px;color:#333;vertical-align:top;padding:4px 6px;"><strong>NOTE:</strong> Tier listed is the base/minimum tier. If additional safety factors are involved, refer to the Triage Queues KA and the Critical Escalations KA.</td></tr>
+          <tr><td class="row-num">3</td><td><span class="eg-link" onclick="goToEC('violent-threats')">Violent Threats</span></td><td class="tier-4">3+</td></tr>
+          <tr><td class="row-num">4</td><td><span class="eg-link" onclick="goToEC('harmful-services')">Harmful Services</span></td><td class="tier-4">4+</td></tr>
+          <tr><td class="row-num">5</td><td><span class="eg-link" onclick="goToEC('gore')">Gore or Violent Images</span></td><td class="tier-1">1</td></tr>
+          <tr><td class="row-num">6</td><td rowspan="9" class="subcat-cell" style="vertical-align:middle;">Sexual Content</td><td><span class="eg-link" onclick="goToEC('minors')">Inappropriate Content Involving Minors</span></td><td class="tier-4">4+</td></tr>
+          <tr><td class="row-num">7</td><td><span class="eg-link" onclick="goToEC('sexual-services')">Sexual Services</span></td><td class="tier-3">3</td></tr>
+          <tr><td class="row-num">8</td><td><span class="eg-link" onclick="goToEC('incidental')">Incidental Sexual Requests</span></td><td class="tier-1">1–4</td></tr>
+          <tr><td class="row-num">9</td><td><span class="eg-link" onclick="goToEC('porn')">Pornography and Sexual Content</span></td><td class="tier-4">4+</td></tr>
+          <tr><td class="row-num">10</td><td><span class="eg-link" onclick="goToEC('explicit')">Explicit Nudity</span></td><td class="tier-4">4+</td></tr>
+          <tr><td class="row-num">11</td><td><span class="eg-link" onclick="goToEC('partial')">Partial Nudity</span></td><td class="tier-1">1</td></tr>
+          <tr><td class="row-num">12</td><td><span class="eg-link" onclick="goToEC('suggestive')">Overly Suggestive Content</span></td><td class="tier-2">2</td></tr>
+          <tr><td class="row-num">13</td><td><span class="eg-link" onclick="goToEC('misconduct')">Sexual Misconduct</span></td><td class="tier-4">4+</td></tr>
+          <tr><td class="row-num">14</td><td><span class="eg-link" onclick="goToEC('advances')">Inappropriate Sexual Advances</span></td><td class="tier-3">3</td></tr>
+          <tr><td class="row-num">15</td><td rowspan="6" class="cat-discrimination" style="font-weight:700;vertical-align:middle;text-align:center;">Discrimination or Inappropriate Content</td><td rowspan="3" class="subcat-cell" style="vertical-align:middle;">Discrimination</td><td><span class="eg-link" onclick="goToEC('hateful')">Hateful Discrimination</span></td><td class="tier-3">3</td><td></td></tr>
+          <tr><td class="row-num">16</td><td><span class="eg-link" onclick="goToEC('hiring')">Hiring or Payment Discrimination</span></td><td class="tier-3">3</td><td></td></tr>
+          <tr><td class="row-num">17</td><td><span class="eg-link" onclick="goToEC('stereotypes')">Inappropriate Stereotypes</span></td><td class="tier-1">1</td><td></td></tr>
+          <tr><td class="row-num">18</td><td rowspan="3" class="subcat-cell" style="vertical-align:middle;">Inappropriate Content / Language</td><td><span class="eg-link" onclick="goToEC('stalking')">Unwanted Contact Without a Business Purpose</span></td><td class="tier-4">4+</td><td></td></tr>
+          <tr><td class="row-num">19</td><td><span class="eg-link" onclick="goToEC('harassment')">Harassment</span></td><td class="tier-3">3</td><td></td></tr>
+          <tr><td class="row-num">20</td><td><span class="eg-link" onclick="goToEC('profanity')">Offensive Insults or Profanity</span></td><td class="tier-2">2</td><td></td></tr>
+          <tr><td class="row-num">21</td><td rowspan="16" class="cat-deceptive" style="font-weight:700;vertical-align:middle;text-align:center;">Deceptive Practices</td><td rowspan="6" class="subcat-cell" style="vertical-align:middle;">Legally Questionable</td><td><span class="eg-link" onclick="goToEC('theft-animal')">Theft of an Animal</span></td><td class="tier-4">4+</td><td></td></tr>
+          <tr><td class="row-num">22</td><td><span class="eg-link" onclick="goToEC('criminal')">Criminal Activity</span></td><td class="tier-3">3</td><td></td></tr>
+          <tr><td class="row-num">23</td><td><span class="eg-link" onclick="goToEC('academic')">Academic Cheating</span></td><td class="tier-2">2</td><td></td></tr>
+          <tr><td class="row-num">24</td><td><span class="eg-link" onclick="goToEC('marijuana')">Marijuana Exposure</span></td><td class="tier-2">2</td><td></td></tr>
+          <tr><td class="row-num">25</td><td><span class="eg-link" onclick="goToEC('ipr')">Violation of Intellectual Property Rights</span></td><td class="tier-4">4</td><td></td></tr>
+          <tr><td class="row-num">26</td><td><span class="eg-link" onclick="goToEC('view-manip')">View Manipulation</span></td><td class="tier-3">3</td><td></td></tr>
+          <tr><td class="row-num">27</td><td rowspan="6" class="subcat-cell" style="vertical-align:middle;">Spammy</td><td><span class="eg-link" onclick="goToEC('payment-scams')">Payment Scams</span></td><td class="tier-3">3</td><td></td></tr>
+          <tr><td class="row-num">28</td><td><span class="eg-link" onclick="goToEC('phishing')">Phishing</span></td><td class="tier-3">3</td><td></td></tr>
+          <tr><td class="row-num">29</td><td><span class="eg-link" onclick="goToEC('promo-abuse')">Promotion Abuse</span></td><td class="tier-1">1</td><td></td></tr>
+          <tr><td class="row-num">30</td><td><span class="eg-link" onclick="goToEC('cds')">Customer Data Scraping</span></td><td class="tier-3">3</td><td></td></tr>
+          <tr><td class="row-num">31</td><td><span class="eg-link" onclick="goToEC('other-deceptive')">Other Deceptive Practices</span></td><td class="tier-2">2</td><td></td></tr>
+          <tr><td class="row-num">32</td><td><span class="eg-link" onclick="goToEC('dps')">Deceptive Practice Signals</span></td><td class="tier-3">3</td><td></td></tr>
+          <tr><td class="row-num">33</td><td class="subcat-cell">Questionable Names</td><td><span class="eg-link" onclick="goToEC('q-names')">Questionable Names</span></td><td class="tier-1">1</td><td></td></tr>
+          <tr><td class="row-num">34</td><td rowspan="3" class="subcat-cell" style="vertical-align:middle;">Competitor Contact Abuse</td><td><span class="eg-link" onclick="goToEC('cca')">Competitor Contact Abuse</span></td><td class="tier-1">1</td><td></td></tr>
+          <tr><td class="row-num">35</td><td><span class="eg-link" onclick="goToEC('fake-reviews')">Fake Reviews</span></td><td class="tier-1">1</td><td></td></tr>
+          <tr><td class="row-num">36</td><td><span class="eg-link" onclick="goToEC('dup-reviews')">Duplicate Reviews</span></td><td class="tier-1">1</td><td></td></tr>
+          <tr><td class="row-num">37</td><td rowspan="4" class="cat-platform" style="font-weight:700;vertical-align:middle;text-align:center;">Platform Violations</td><td class="subcat-cell">Competitor Services</td><td><span class="eg-link" onclick="goToEC('promo-cs')">Promoting Competitor Services</span></td><td class="tier-1">1–3</td><td></td></tr>
+          <tr><td class="row-num">38</td><td rowspan="3" class="subcat-cell" style="vertical-align:middle;">Misuse of Services</td><td><span class="eg-link" onclick="goToEC('no-hire')">Contact Without Intent to Hire</span></td><td class="tier-1">1</td><td></td></tr>
+          <tr><td class="row-num">39</td><td><span class="eg-link" onclick="goToEC('gibberish')">Gibberish Profiles</span></td><td class="tier-1">1</td><td></td></tr>
+          <tr><td class="row-num">40</td><td><span class="eg-link" onclick="goToEC('barter')">Barter or Free Services</span></td><td class="tier-1">1</td><td></td></tr>
+        </tbody>
+      </table>
+      </div>
+      <div class="gs-tabs">
+        <div class="gs-tab active-tab" onclick="showTab('nav')">Navigation</div>
+        <div class="gs-tab" onclick="showTab('ec')">Enforcement Criteria</div>
+        <div class="gs-tab">Pro Violation</div><div class="gs-tab">PR</div>
+        <div class="gs-tab" onclick="showTab('ir')">IR</div>
+        <div class="gs-tab">FR</div><div class="gs-tab">CMR</div><div class="gs-tab">CV</div>
+        <div class="gs-tab">IPR / IPSR</div><div class="gs-tab">PAI</div>
+        <div class="gs-tab">LACUA</div><div class="gs-tab">BLH</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ ENFORCEMENT CRITERIA tab ══ -->
+  <div class="tab-pane" id="tab-ec">
+    <div class="gs-shell">
+      <div class="gs-formulabar"><span class="gs-cellref" id="ec-cellref">A1</span><span class="gs-fx">fx</span></div>
+      <div style="overflow-x:auto;max-height:420px;overflow-y:auto;" id="ec-scroll">
+      <table class="gs-grid">
+        <thead><tr>
+          <th class="row-num"></th>
+          <th style="width:110px;">A — Title</th>
+          <th style="width:185px;">B — Definition</th>
+          <th style="width:185px;">C — Identification Criteria</th>
+          <th style="width:140px;">D — Violation Examples</th>
+          <th style="width:140px;">E — Exclusion Examples</th>
+          <th style="width:85px;">F — Similar Policies</th>
+          <th style="width:44px;">G — Tier</th>
+          <th style="width:120px;">H — Applicable Queue(s)</th>
+        </tr></thead>
+        <tbody>
+          <tr><td class="row-num">1</td><td colspan="8" style="background:#434343;color:#fff;font-weight:600;">Enforcement Criteria</td></tr>
+          <!-- Violent Harm -->
+          <tr id="ec-violent-harm"><td class="row-num">2</td><td class="col-title"><span class="eg-link" onclick="showTab('nav')">Violent Harm ↩</span></td><td class="col-def">Indication that violent physical harm has been intentionally attempted or inflicted by a user against another person or their animal.</td><td class="col-crit">ALL OF THE FOLLOWING: User accused of attempting physical harm; no indication it was accidental; action could reasonably cause injury or sexual harm.</td><td class="col-ex">User reported for shoving a woman to the ground in anger; user reported for attempting to sexually assault another person</td><td class="col-excl">Obvious accidental harm; action would not reasonably cause injury</td><td class="col-sim">Violent Threats; Gore or Disturbing Images</td><td class="tier-4">4+</td><td class="col-queue">Pro Violation / Customer Queue<br>Profile Review<br>Fake Reviews<br><span class="eg-link green" onclick="goToIR('violent-harm')">Image Review ↗</span><br>Customer Message Review<br>IPR / IPSR<br>Contact Verification<br>Pro Abuse Investigation</td></tr>
+          <!-- Violent Threats -->
+          <tr id="ec-violent-threats"><td class="row-num">3</td><td class="col-title"><span class="eg-link" onclick="showTab('nav')">Violent Threats ↩</span></td><td class="col-def">Threats of self-harm, harm against other people, or harm against owned animals. Tier 4 if action plan (method/location/time). Tier 6 if imminent. Tier 3 if general.</td><td class="col-crit">ALL OF THE FOLLOWING: User makes threat against themselves, another person, property, or a pet; threat would reasonably cause physical injury or sexual harm.</td><td class="col-ex">"I'm going to put a pipe bomb in your mailbox." / "I'm going to kill myself tonight."</td><td class="col-excl">Clear and obvious joke or hyperbole; action would not reasonably cause harm</td><td class="col-sim">Violent Harm; Gore or Disturbing Images; Harassment</td><td class="tier-4">3+</td><td class="col-queue">Pro Violation / Customer Queue<br>Profile Review<br>Fake Reviews<br><span class="eg-link green" onclick="goToIR('violent-threats')">Image Review ↗</span><br>Customer Message Review<br>IPR / IPSR<br>Contact Verification<br>Pro Abuse Investigation</td></tr>
+          <!-- Gore -->
+          <tr id="ec-gore"><td class="row-num">4</td><td class="col-title"><span class="eg-link" onclick="showTab('nav')">Gore or Violent Images ↩</span></td><td class="col-def">Uploaded images containing depictions of gore, blood, bodily fluids, deadly weapons, or human/animal death.</td><td class="col-crit">ONE OF THE FOLLOWING: Gore/internal organs/bloody injuries; other human bodily fluids; realistic depictions of death; promotions of self-harm; images of deadly weapons (guns, swords, daggers).</td><td class="col-ex">Pro uploads photo lancing a boil; user uploads photo holding a razor against wrist</td><td class="col-excl">Small/trivial amounts of blood; obviously fake gore not in business avatar; weapons relevant to category and not in use</td><td class="col-sim">Violent Harm; Profanity</td><td class="tier-1">1</td><td class="col-queue">Pro Violation / Customer Queue<br>Profile Review<br>Fake Reviews<br><span class="eg-link green" onclick="goToIR('gore')">Image Review ↗</span><br>Customer Message Review<br>IPR / IPSR<br>Contact Verification<br>Pro Abuse Investigation</td></tr>
+          <!-- Hateful Discrimination -->
+          <tr id="ec-hateful"><td class="row-num">5</td><td class="col-title"><span class="eg-link" onclick="showTab('nav')">Hateful Discrimination ↩</span></td><td class="col-def">Hateful or harassing conduct directed towards a person or group based on protected class status.</td><td class="col-crit">ONE OF THE FOLLOWING: Targeting others with harassment/insults based on protected class; using hateful slurs; images/symbols related to hate groups (e.g. swastikas).</td><td class="col-ex">Customer calls pro a "greedy jew"; pro calls customer a homophobic slur after disagreement</td><td class="col-excl">Mentioning protected class without negative commentary; self-deprecating humor</td><td class="col-sim">Hiring or Payment Discrimination; Inappropriate Stereotypes; Harassment</td><td class="tier-3">3</td><td class="col-queue">Pro Violation / Customer Queue<br>Profile Review<br>Fake Reviews<br><span class="eg-link green" onclick="goToIR('hateful')">Image Review ↗</span><br>Customer Message Review<br>IPR / IPSR<br>Contact Verification<br>Pro Abuse Investigation</td></tr>
+          <!-- Criminal Activity -->
+          <tr id="ec-criminal"><td class="row-num">6</td><td class="col-title"><span class="eg-link" onclick="showTab('nav')">Criminal Activity ↩</span></td><td class="col-def">Offers, requests, services, or admissions of obvious illegal activity. Includes theft, illegal hacking, illegal drugs, illegal firearms, falsified documents, underage alcohol consumption.</td><td class="col-crit">ALL OF THE FOLLOWING: Explicit admission/offer/request involving illegal activity; meets one of the criteria (theft, hacking, illegal drugs, illegal firearms, falsified docs, underage alcohol, negative impact on TT or another person).</td><td class="col-ex">User requests pro transport cocaine; pro admits stealing watch from customer's house</td><td class="col-excl">Hacking for data recovery on own device; over-the-counter medicine; general weapon requests not obviously illegal. If only drug is marijuana → Marijuana Exposure.</td><td class="col-sim">Academic Cheating; Theft of an Animal; Marijuana Exposure</td><td class="tier-3">3</td><td class="col-queue">Pro Violation / Customer Queue<br>Profile Review<br>Fake Reviews<br><span class="eg-link green" onclick="goToIR('criminal')">Image Review ↗</span><br>Customer Message Review<br>IPR / IPSR<br>Contact Verification<br>Pro Abuse Investigation</td></tr>
+          <!-- Academic Cheating -->
+          <tr id="ec-academic"><td class="row-num">7</td><td class="col-title"><span class="eg-link" onclick="showTab('nav')">Academic Cheating ↩</span></td><td class="col-def">Offers, requests, or services for cheating in an academic context.</td><td class="col-crit">ALL OF THE FOLLOWING: Offers, requests, or service profiles advertising academic cheating, providing test answers, or doing academic work for another person.</td><td class="col-ex">Pro offers to write a college essay; customer asks pro to write their thesis</td><td class="col-excl">Ghostwriting outside academic settings; proofreading; academic tutoring</td><td class="col-sim">Criminal Activity</td><td class="tier-2">2</td><td class="col-queue">Pro Violation / Customer Queue<br>Profile Review<br>Fake Reviews<br><span class="eg-link green" onclick="goToIR('academic')">Image Review ↗</span><br>Customer Message Review<br>IPR / IPSR<br>Contact Verification<br>Pro Abuse Investigation</td></tr>
+          <!-- Marijuana Exposure -->
+          <tr id="ec-marijuana"><td class="row-num">8</td><td class="col-title"><span class="eg-link" onclick="showTab('nav')">Marijuana Exposure ↩</span></td><td class="col-def text-wrap">Activities that would expose users to marijuana, or uploading images that promote marijuana.<br><br>Common slang: weed, grass, bud, herb, ganja, pot, dope, reefer, indica, sativa. Do not base judgments exclusively on presence of slang — use context.</td><td class="col-crit text-wrap">ONE OF THE FOLLOWING:<br>• Offers, requests, services, or activities that would expose (in person) another user to marijuana or derivative edibles<br>• Images depicting marijuana, cannabis plants, or referencing THC</td><td class="col-ex text-wrap">• User tells pro he'll be smoking marijuana near the pro while working<br>• User asks pro to complete irrigation project on their marijuana farm<br>• Pro uploads an image of a cannabis leaf</td><td class="col-excl text-wrap">• Services re: marijuana use with no in-person exposure (e.g. voice acting, consulting on dispensary business plan)<br>• CBD references without oral consumption (e.g. topical CBD oil)</td><td class="col-sim">Criminal Activity</td><td class="tier-2">2</td><td class="col-queue text-wrap">Pro Violation / Customer Queue<br>Profile Review<br>Fake Reviews<br><span class="eg-link green" onclick="goToIR('marijuana')">Image Review ↗</span><br>Customer Message Review<br>Incentive / Referral Fraud<br>IPR / IPSR<br>Contact Verification<br>Pro Abuse Investigation</td></tr>
+          <!-- IPR -->
+          <tr id="ec-ipr"><td class="row-num">9</td><td class="col-title"><span class="eg-link" onclick="showTab('nav')">Violation of Intellectual Property Rights ↩</span></td><td class="col-def">User-identified violations of IP rights including copyright or trademark law. TT does not identify violations — only removes content related to valid claims. Critical Escalations only.</td><td class="col-crit">ALL OF THE FOLLOWING: Content identified in DMCA or Trademark complaint; submitted by person claiming to own the content; infringing content can be located on Thumbtack.</td><td class="col-ex">"This pro is using my art without permission as their profile picture."</td><td class="col-excl">Reports by 3rd party not claiming to own content; claims for content not hosted on TT</td><td class="col-sim">Criminal Activity; Academic Cheating</td><td class="tier-4">4</td><td class="col-queue">Pro Violation / Customer Queue<br>Profile Review<br>Fake Reviews<br><span class="eg-link green" onclick="goToIR('ipr')">Image Review ↗</span><br>Customer Message Review<br>IPR / IPSR<br>Contact Verification<br>Pro Abuse Investigation</td></tr>
+          <!-- View Manipulation -->
+          <tr id="ec-view-manip"><td class="row-num">10</td><td class="col-title"><span class="eg-link" onclick="showTab('nav')">View Manipulation ↩</span></td><td class="col-def">Advertising, requesting, or offering to boost views, reviews, or otherwise illegally manipulate TT or other services for monetary/reputational advantage.</td><td class="col-crit">ONE OF THE FOLLOWING: Artificially boost profile/video views; sell fake reviews; artificially boost contacts or bookings on TT or another service.</td><td class="col-ex">"I can get you more profile views if you give me $15/month."</td><td class="col-excl">Advice on legitimate profile improvements; requesting reviews for actual completed jobs; legitimate marketing or SEO</td><td class="col-sim">Criminal Activity; Academic Cheating</td><td class="tier-3">3</td><td class="col-queue">Pro Violation / Customer Queue<br>Profile Review<br>Fake Reviews<br><span class="eg-link green" onclick="goToIR('view-manip')">Image Review ↗</span><br>Customer Message Review<br>IPR / IPSR<br>Contact Verification<br>Pro Abuse Investigation</td></tr>
+          <!-- Contact Avoidance -->
+          <tr id="ec-contact-avoid"><td class="row-num">11</td><td class="col-title"><span class="eg-link" onclick="showTab('nav')">Contact Avoidance ↩</span></td><td class="col-def">Pros attempting to deter users from contacting them on TT to avoid paying lead fees — by posting contact info publicly or citing lead fees to discourage contact.</td><td class="col-crit">ONE OF THE FOLLOWING: Contact info (even masked) in profile/images/business name; QR codes; explicit social media handles or directing users to contact via social media; directing users to book off-TT; offering discounts for booking off-TT; referencing TT contact fees negatively.</td><td class="col-ex">Pro puts email on service profile; "If you book me off-Thumbtack, you get a 10% discount."</td><td class="col-excl">Managed Accounts (escalate); mentioning other apps in context of completing the service; asking for social media follows without requesting DMs</td><td class="col-sim">Promoting Competitor Services</td><td class="tier-1">1</td><td class="col-queue">Pro Violation / Customer Queue<br>Profile Review<br>Fake Reviews<br><span class="eg-link green" onclick="goToIR('contact-avoid')">Image Review ↗</span><br>Customer Message Review<br>IPR / IPSR<br>Contact Verification<br>Pro Abuse Investigation</td></tr>
+          <!-- Placeholder rows for nav links that don't have full EC rows -->
+          <tr id="ec-harmful-services" style="display:none;"><td class="row-num">–</td><td colspan="8" style="color:#9ca3af;font-style:italic;font-size:12px;">See full Enforcement Criteria sheet for Harmful Services definition.</td></tr>
+          <tr id="ec-minors" style="display:none;"><td class="row-num">–</td><td colspan="8" style="color:#9ca3af;font-style:italic;font-size:12px;">See full Enforcement Criteria sheet for Inappropriate Content Involving Minors definition.</td></tr>
+          <tr id="ec-sexual-services" style="display:none;"><td class="row-num">–</td><td colspan="8" style="color:#9ca3af;font-style:italic;font-size:12px;">See full Enforcement Criteria sheet for Sexual Services definition.</td></tr>
+          <tr id="ec-incidental" style="display:none;"><td class="row-num">–</td><td colspan="8" style="color:#9ca3af;font-style:italic;font-size:12px;">See full Enforcement Criteria sheet for Incidental Sexual Requests definition.</td></tr>
+          <tr id="ec-porn" style="display:none;"><td class="row-num">–</td><td colspan="8" style="color:#9ca3af;font-style:italic;font-size:12px;">See full Enforcement Criteria sheet for Pornography and Sexual Content definition.</td></tr>
+          <tr id="ec-explicit" style="display:none;"><td class="row-num">–</td><td colspan="8" style="color:#9ca3af;font-style:italic;font-size:12px;">See full Enforcement Criteria sheet for Explicit Nudity definition.</td></tr>
+          <tr id="ec-partial" style="display:none;"><td class="row-num">–</td><td colspan="8" style="color:#9ca3af;font-style:italic;font-size:12px;">See full Enforcement Criteria sheet for Partial Nudity definition.</td></tr>
+          <tr id="ec-suggestive" style="display:none;"><td class="row-num">–</td><td colspan="8" style="color:#9ca3af;font-style:italic;font-size:12px;">See full Enforcement Criteria sheet for Overly Suggestive Content definition.</td></tr>
+          <tr id="ec-misconduct" style="display:none;"><td class="row-num">–</td><td colspan="8" style="color:#9ca3af;font-style:italic;font-size:12px;">See full Enforcement Criteria sheet for Sexual Misconduct definition.</td></tr>
+          <tr id="ec-advances" style="display:none;"><td class="row-num">–</td><td colspan="8" style="color:#9ca3af;font-style:italic;font-size:12px;">See full Enforcement Criteria sheet for Inappropriate Sexual Advances definition.</td></tr>
+          <tr id="ec-hiring" style="display:none;"><td class="row-num">–</td><td colspan="8" style="color:#9ca3af;font-style:italic;font-size:12px;">See full Enforcement Criteria sheet for Hiring or Payment Discrimination definition.</td></tr>
+          <tr id="ec-stereotypes" style="display:none;"><td class="row-num">–</td><td colspan="8" style="color:#9ca3af;font-style:italic;font-size:12px;">See full Enforcement Criteria sheet for Inappropriate Stereotypes definition.</td></tr>
+          <tr id="ec-stalking" style="display:none;"><td class="row-num">–</td><td colspan="8" style="color:#9ca3af;font-style:italic;font-size:12px;">See full Enforcement Criteria sheet for Unwanted Contact Without a Business Purpose definition.</td></tr>
+          <tr id="ec-harassment" style="display:none;"><td class="row-num">–</td><td colspan="8" style="color:#9ca3af;font-style:italic;font-size:12px;">See full Enforcement Criteria sheet for Harassment definition.</td></tr>
+          <tr id="ec-profanity" style="display:none;"><td class="row-num">–</td><td colspan="8" style="color:#9ca3af;font-style:italic;font-size:12px;">See full Enforcement Criteria sheet for Offensive Insults or Profanity definition.</td></tr>
+          <tr id="ec-theft-animal" style="display:none;"><td class="row-num">–</td><td colspan="8" style="color:#9ca3af;font-style:italic;font-size:12px;">See full Enforcement Criteria sheet for Theft of an Animal definition.</td></tr>
+          <tr id="ec-payment-scams" style="display:none;"><td class="row-num">–</td><td colspan="8" style="color:#9ca3af;font-style:italic;font-size:12px;">See full Enforcement Criteria sheet for Payment Scams definition.</td></tr>
+          <tr id="ec-phishing" style="display:none;"><td class="row-num">–</td><td colspan="8" style="color:#9ca3af;font-style:italic;font-size:12px;">See full Enforcement Criteria sheet for Phishing definition.</td></tr>
+          <tr id="ec-promo-abuse" style="display:none;"><td class="row-num">–</td><td colspan="8" style="color:#9ca3af;font-style:italic;font-size:12px;">See full Enforcement Criteria sheet for Promotion Abuse definition.</td></tr>
+          <tr id="ec-cds" style="display:none;"><td class="row-num">–</td><td colspan="8" style="color:#9ca3af;font-style:italic;font-size:12px;">See full Enforcement Criteria sheet for Customer Data Scraping definition.</td></tr>
+          <tr id="ec-other-deceptive" style="display:none;"><td class="row-num">–</td><td colspan="8" style="color:#9ca3af;font-style:italic;font-size:12px;">See full Enforcement Criteria sheet for Other Deceptive Practices definition.</td></tr>
+          <tr id="ec-dps" style="display:none;"><td class="row-num">–</td><td colspan="8" style="color:#9ca3af;font-style:italic;font-size:12px;">See full Enforcement Criteria sheet for Deceptive Practice Signals definition.</td></tr>
+          <tr id="ec-q-names" style="display:none;"><td class="row-num">–</td><td colspan="8" style="color:#9ca3af;font-style:italic;font-size:12px;">See full Enforcement Criteria sheet for Questionable Names definition.</td></tr>
+          <tr id="ec-cca" style="display:none;"><td class="row-num">–</td><td colspan="8" style="color:#9ca3af;font-style:italic;font-size:12px;">See full Enforcement Criteria sheet for Competitor Contact Abuse definition.</td></tr>
+          <tr id="ec-fake-reviews" style="display:none;"><td class="row-num">–</td><td colspan="8" style="color:#9ca3af;font-style:italic;font-size:12px;">See full Enforcement Criteria sheet for Fake Reviews definition.</td></tr>
+          <tr id="ec-dup-reviews" style="display:none;"><td class="row-num">–</td><td colspan="8" style="color:#9ca3af;font-style:italic;font-size:12px;">See full Enforcement Criteria sheet for Duplicate Reviews definition.</td></tr>
+          <tr id="ec-promo-cs" style="display:none;"><td class="row-num">–</td><td colspan="8" style="color:#9ca3af;font-style:italic;font-size:12px;">See full Enforcement Criteria sheet for Promoting Competitor Services definition.</td></tr>
+          <tr id="ec-no-hire" style="display:none;"><td class="row-num">–</td><td colspan="8" style="color:#9ca3af;font-style:italic;font-size:12px;">See full Enforcement Criteria sheet for Contact Without Intent to Hire definition.</td></tr>
+          <tr id="ec-gibberish" style="display:none;"><td class="row-num">–</td><td colspan="8" style="color:#9ca3af;font-style:italic;font-size:12px;">See full Enforcement Criteria sheet for Gibberish Profiles definition.</td></tr>
+          <tr id="ec-barter" style="display:none;"><td class="row-num">–</td><td colspan="8" style="color:#9ca3af;font-style:italic;font-size:12px;">See full Enforcement Criteria sheet for Barter or Free Services definition.</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <div class="gs-tabs">
+        <div class="gs-tab" onclick="showTab('nav')">Navigation</div>
+        <div class="gs-tab active-tab">Enforcement Criteria</div>
+        <div class="gs-tab">Pro Violation</div><div class="gs-tab">PR</div>
+        <div class="gs-tab" onclick="showTab('ir')">IR</div>
+        <div class="gs-tab">FR</div><div class="gs-tab">CMR</div><div class="gs-tab">CV</div>
+        <div class="gs-tab">IPR / IPSR</div><div class="gs-tab">PAI</div>
+        <div class="gs-tab">LACUA</div><div class="gs-tab">BLH</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ IMAGE REVIEW tab ══ -->
+  <div class="tab-pane" id="tab-ir">
+    <div class="gs-shell">
+      <div class="gs-formulabar"><span class="gs-cellref" id="ir-cellref">A1</span><span class="gs-fx">fx</span></div>
+      <div style="overflow-x:auto;max-height:420px;overflow-y:auto;" id="ir-scroll">
+      <table class="gs-grid">
+        <thead><tr>
+          <th class="row-num"></th>
+          <th style="width:130px;">A — Title</th>
+          <th style="width:68px;">B — User Type</th>
+          <th colspan="2" style="width:200px;">C/D — Picklist</th>
+          <th style="width:150px;">E — Required Comments</th>
+          <th style="width:44px;">F — Tier</th>
+          <th style="width:88px;">G — Image</th>
+          <th style="width:88px;">H — Admin Action</th>
+          <th style="width:60px;">I — Blocklist</th>
+          <th style="width:88px;">J — Escalation</th>
+        </tr></thead>
+        <tbody>
+          <tr><td class="row-num">1</td><td colspan="10" style="background:#434343;color:#fff;font-weight:600;white-space:normal;">Image Review (IR) — Pro violations discovered in Image Review queue</td></tr>
+          <!-- Violent Threats — block A (lighter) -->
+          <tr id="ir-violent-threats" class="ir-block-a"><td class="row-num">2</td><td rowspan="3" class="ir-title"><span class="eg-link" onclick="goToEC('violent-threats')">Violent Threats ↩</span></td><td rowspan="3">Pro</td><td>TACK:</td><td>Confirmed Violation | TOS Violation | Inappropriate Content / Language</td><td>Describe violation if unclear</td><td rowspan="3" class="cell-tier">3 / 4 / 6</td><td rowspan="3" class="cell-no-action">No Action</td><td rowspan="3" class="cell-delete">Delete<br>Manual</td><td rowspan="3" class="cell-yes">Yes<br>Manual</td><td rowspan="3" class="cell-escalate">Manager (imminent);<br>Critical Escalation (Action Plan)</td></tr>
+          <tr class="ir-block-a"><td class="row-num">3</td><td>ADMIN:</td><td>Inappropriate Content — WT #, Describe violation if unclear</td><td></td></tr>
+          <tr class="ir-block-a"><td class="row-num">4</td><td>BLIST:</td><td>Community Standards Violation — WT #, Violation category: Inappropriate Content/Language</td><td></td></tr>
+          <!-- Harmful Services — block B (darker) -->
+          <tr id="ir-harmful-services" class="ir-block-b"><td class="row-num">5</td><td rowspan="3" class="ir-title"><span class="eg-link" onclick="goToEC('harmful-services')">Harmful Services ↩</span></td><td rowspan="3">Pro</td><td>TACK:</td><td>Confirmed Violation | TOS Violation | Legally Questionable</td><td>Describe violation</td><td rowspan="3" class="cell-tier">4+</td><td rowspan="3" class="cell-no-action">No Action</td><td rowspan="3" class="cell-delete">Delete<br>Manual</td><td rowspan="3" class="cell-yes">Yes<br>Manual</td><td rowspan="3" class="cell-escalate">Manager;<br>Critical Escalation (Action Plan)</td></tr>
+          <tr class="ir-block-b"><td class="row-num">6</td><td>ADMIN:</td><td>Legally Questionable — WT #, Describe violation if unclear</td><td></td></tr>
+          <tr class="ir-block-b"><td class="row-num">7</td><td>BLIST:</td><td>Community Standards Violation — WT #, Violation category: Legally Questionable</td><td></td></tr>
+          <!-- Gore or Violent Images — block A -->
+          <tr id="ir-gore" class="ir-block-a"><td class="row-num">8</td><td rowspan="3" class="ir-title"><span class="eg-link" onclick="goToEC('gore')">Gore or Violent Images ↩</span></td><td rowspan="3">Pro</td><td>TACK:</td><td>Confirmed Violation | TOS Violation | Other Violation</td><td>Describe violation if unclear</td><td rowspan="3" class="cell-tier">1</td><td rowspan="3" class="cell-delete">Delete<br>Manual</td><td rowspan="3" class="cell-none">None</td><td rowspan="3" class="cell-no">No</td><td rowspan="3" class="cell-no-esc">No</td></tr>
+          <tr class="ir-block-a"><td class="row-num">9</td><td>ADMIN:</td><td>N/A</td><td></td></tr>
+          <tr class="ir-block-a"><td class="row-num">10</td><td>BLIST:</td><td>N/A</td><td></td></tr>
+          <!-- Explicit Nudity — block B -->
+          <tr id="ir-explicit" class="ir-block-b"><td class="row-num">11</td><td rowspan="3" class="ir-title"><span class="eg-link" onclick="goToEC('explicit')">Explicit Nudity ↩</span></td><td rowspan="3">Pro</td><td>TACK:</td><td>Confirmed Violation | TOS Violation | Explicit Nudity</td><td>Explicit Nudity</td><td rowspan="3" class="cell-tier">4+</td><td rowspan="3" class="cell-no-action">No Action</td><td rowspan="3" class="cell-delete">Delete<br>Manual</td><td rowspan="3" class="cell-yes">Yes<br>Manual</td><td rowspan="3" class="cell-escalate">Yes —<br>Critical Escalation</td></tr>
+          <tr class="ir-block-b"><td class="row-num">12</td><td>ADMIN:</td><td>Inappropriate Content — WT #, Explicit Nudity</td><td></td></tr>
+          <tr class="ir-block-b"><td class="row-num">13</td><td>BLIST:</td><td>Community Standards Violation — WT #, Violation category: Explicit Nudity</td><td></td></tr>
+          <!-- Hateful Discrimination — block A -->
+          <tr id="ir-hateful" class="ir-block-a"><td class="row-num">14</td><td rowspan="3" class="ir-title"><span class="eg-link" onclick="goToEC('hateful')">Hateful Discrimination ↩</span></td><td rowspan="3">Pro</td><td>TACK:</td><td>Confirmed Violation | TOS Violation | Discrimination</td><td>Describe violation if unclear</td><td rowspan="3" class="cell-tier">3</td><td rowspan="3" class="cell-delete">Delete<br>Manual</td><td rowspan="3" class="cell-delete">Delete<br>Manual</td><td rowspan="3" class="cell-yes">Yes<br>Manual</td><td rowspan="3" class="cell-no-esc">No</td></tr>
+          <tr class="ir-block-a"><td class="row-num">15</td><td>ADMIN:</td><td>Discrimination — WT #, Describe violation if unclear</td><td></td></tr>
+          <tr class="ir-block-a"><td class="row-num">16</td><td>BLIST:</td><td>Community Standards Violation — WT #, Violation category: Discrimination</td><td></td></tr>
+          <!-- Criminal Activity — block B -->
+          <tr id="ir-criminal" class="ir-block-b"><td class="row-num">17</td><td rowspan="3" class="ir-title"><span class="eg-link" onclick="goToEC('criminal')">Criminal Activity ↩</span></td><td rowspan="3">Pro</td><td>TACK:</td><td>Confirmed Violation | TOS Violation | Legally Questionable</td><td>Describe violation</td><td rowspan="3" class="cell-tier">3</td><td rowspan="3" class="cell-delete">Delete<br>Manual</td><td rowspan="3" class="cell-delete">Delete<br>Manual</td><td rowspan="3" class="cell-yes">Yes<br>Manual</td><td rowspan="3" class="cell-no-esc">No</td></tr>
+          <tr class="ir-block-b"><td class="row-num">18</td><td>ADMIN:</td><td>Legally Questionable — WT #, Describe violation</td><td></td></tr>
+          <tr class="ir-block-b"><td class="row-num">19</td><td>BLIST:</td><td>Community Standards Violation — WT #, Violation category: Legally Questionable</td><td></td></tr>
+          <!-- Academic Cheating — block A -->
+          <tr id="ir-academic" class="ir-block-a"><td class="row-num">20</td><td rowspan="3" class="ir-title"><span class="eg-link" onclick="goToEC('academic')">Academic Cheating ↩</span></td><td rowspan="3">Pro</td><td>TACK:</td><td>Confirmed Violation | TOS Violation | Legally Questionable</td><td>Describe violation if unclear</td><td rowspan="3" class="cell-tier">2</td><td rowspan="3" class="cell-delete">Delete<br>Manual</td><td rowspan="3" class="cell-none">None</td><td rowspan="3" class="cell-no">No</td><td rowspan="3" class="cell-no-esc">No</td></tr>
+          <tr class="ir-block-a"><td class="row-num">21</td><td>ADMIN:</td><td>N/A</td><td></td></tr>
+          <tr class="ir-block-a"><td class="row-num">22</td><td>BLIST:</td><td>N/A</td><td></td></tr>
+          <!-- Marijuana Exposure — block B -->
+          <tr id="ir-marijuana" class="ir-block-b"><td class="row-num">23</td><td rowspan="3" class="ir-title"><span class="eg-link" onclick="goToEC('marijuana')">Marijuana Exposure ↩</span></td><td rowspan="3">Pro</td><td>TACK:</td><td>Confirmed Violation | TOS Violation | Legally Questionable</td><td>Describe violation if unclear</td><td rowspan="3" class="cell-tier">2</td><td rowspan="3" class="cell-delete">Delete<br>Manual</td><td rowspan="3" class="cell-none">None</td><td rowspan="3" class="cell-no">No</td><td rowspan="3" class="cell-no-esc">No</td></tr>
+          <tr class="ir-block-b"><td class="row-num">24</td><td>ADMIN:</td><td>N/A</td><td></td></tr>
+          <tr class="ir-block-b"><td class="row-num">25</td><td>BLIST:</td><td>N/A</td><td></td></tr>
+          <!-- IPR — block A -->
+          <tr id="ir-ipr" class="ir-block-a"><td class="row-num">26</td><td rowspan="3" class="ir-title"><span class="eg-link" onclick="goToEC('ipr')">Violation of IPR ↩</span></td><td rowspan="3">Pro</td><td>TACK:</td><td>Confirmed Violation | TOS Violation | Legally Questionable</td><td>Describe violation</td><td rowspan="3" class="cell-tier">4</td><td rowspan="3" class="cell-no-action">No Action</td><td rowspan="3" class="cell-delete">Delete<br>Manual</td><td rowspan="3" class="cell-yes">Yes<br>Manual</td><td rowspan="3" class="cell-escalate">Yes —<br>Critical Escalation</td></tr>
+          <tr class="ir-block-a"><td class="row-num">27</td><td>ADMIN:</td><td>Legally Questionable — WT #</td><td></td></tr>
+          <tr class="ir-block-a"><td class="row-num">28</td><td>BLIST:</td><td>Community Standards Violation — WT #</td><td></td></tr>
+          <!-- View Manipulation — block B -->
+          <tr id="ir-view-manip" class="ir-block-b"><td class="row-num">29</td><td rowspan="3" class="ir-title"><span class="eg-link" onclick="goToEC('view-manip')">View Manipulation ↩</span></td><td rowspan="3">Pro</td><td>TACK:</td><td>Confirmed Violation | TOS Violation | Legally Questionable</td><td>Describe violation</td><td rowspan="3" class="cell-tier">3</td><td rowspan="3" class="cell-delete">Delete<br>Manual</td><td rowspan="3" class="cell-delete">Delete<br>Manual</td><td rowspan="3" class="cell-yes">Yes<br>Manual</td><td rowspan="3" class="cell-no-esc">No</td></tr>
+          <tr class="ir-block-b"><td class="row-num">30</td><td>ADMIN:</td><td>Legally Questionable — WT #, Describe violation</td><td></td></tr>
+          <tr class="ir-block-b"><td class="row-num">31</td><td>BLIST:</td><td>Community Standards Violation — WT #, Violation category: Legally Questionable</td><td></td></tr>
+          <!-- Promoting Competitor Services — block A -->
+          <tr id="ir-promo-cs" class="ir-block-a"><td class="row-num">32</td><td rowspan="3" class="ir-title"><span class="eg-link" onclick="goToEC('promo-cs')">Promoting Competitor Services ↩</span></td><td rowspan="3">Pro</td><td>TACK:</td><td>Confirmed Violation | TOS Violation | Other Violation</td><td>Describe violation</td><td rowspan="3" class="cell-tier">1</td><td rowspan="3" class="cell-delete">Delete<br>Manual</td><td rowspan="3" class="cell-delete">Delete<br>Manual</td><td rowspan="3" class="cell-yes">Yes<br>Manual</td><td rowspan="3" class="cell-no-esc">No</td></tr>
+          <tr class="ir-block-a"><td class="row-num">33</td><td>ADMIN:</td><td>Competitor Service — WT #, Describe violation</td><td></td></tr>
+          <tr class="ir-block-a"><td class="row-num">34</td><td>BLIST:</td><td>Community Standards Violation — WT #, Violation category: Competitor Services</td><td></td></tr>
+          <!-- Contact Avoidance — block B -->
+          <tr id="ir-contact-avoid" class="ir-block-b"><td class="row-num">35</td><td rowspan="3" class="ir-title"><span class="eg-link" onclick="goToEC('contact-avoid')">Contact Avoidance ↩</span></td><td rowspan="3">Pro</td><td>TACK:</td><td>Confirmed Violation | TOS Violation | Contact Avoidance</td><td>Describe violation if unclear</td><td rowspan="3" class="cell-tier">1</td><td rowspan="3" class="cell-delete">Delete<br>Manual</td><td rowspan="3" class="cell-none">None</td><td rowspan="3" class="cell-no">No</td><td rowspan="3" class="cell-no-esc">No</td></tr>
+          <tr class="ir-block-b"><td class="row-num">36</td><td>ADMIN:</td><td>N/A</td><td></td></tr>
+          <tr class="ir-block-b"><td class="row-num">37</td><td>BLIST:</td><td>N/A</td><td></td></tr>
+          <!-- Not a Thumbtack Service — block A -->
+          <tr id="ir-not-tt" class="ir-block-a"><td class="row-num">38</td><td rowspan="3" class="ir-title"><span class="eg-link" onclick="goToEC('not-tt')">Not a Thumbtack Service ↩</span></td><td rowspan="3">Pro</td><td>TACK:</td><td>Confirmed Violation | TOS Violation | Other Violation</td><td>Disallowed Service</td><td rowspan="3" class="cell-tier">2</td><td rowspan="3" class="cell-delete">Delete<br>Manual</td><td rowspan="3" class="cell-none">None</td><td rowspan="3" class="cell-no">No</td><td rowspan="3" class="cell-no-esc">No</td></tr>
+          <tr class="ir-block-a"><td class="row-num">39</td><td>ADMIN:</td><td>N/A</td><td></td></tr>
+          <tr class="ir-block-a"><td class="row-num">40</td><td>BLIST:</td><td>N/A</td><td></td></tr>
+        </tbody>
+      </table>
+      </div>
+      <div class="gs-tabs">
+        <div class="gs-tab" onclick="showTab('nav')">Navigation</div>
+        <div class="gs-tab" onclick="showTab('ec')">Enforcement Criteria</div>
+        <div class="gs-tab">Pro Violation</div><div class="gs-tab">PR</div>
+        <div class="gs-tab active-tab ir-tab">IR</div>
+        <div class="gs-tab">FR</div><div class="gs-tab">CMR</div><div class="gs-tab">CV</div>
+        <div class="gs-tab">IPR / IPSR</div><div class="gs-tab">PAI</div>
+        <div class="gs-tab">LACUA</div><div class="gs-tab">BLH</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ Progress strip ══ -->
+  <div class="progress-strip">
+    <div class="step">
+      <div class="step-dot" id="dot-nav">1</div>
+      <span class="step-label" id="lbl-nav">Navigation</span>
+    </div>
+    <span class="step-arrow">›</span>
+    <div class="step">
+      <div class="step-dot" id="dot-ec">2</div>
+      <span class="step-label" id="lbl-ec">Enforcement Criteria</span>
+    </div>
+    <span class="step-arrow">›</span>
+    <div class="step">
+      <div class="step-dot" id="dot-ir">3</div>
+      <span class="step-label" id="lbl-ir">Image Review (IR)</span>
+    </div>
+    <span class="step-arrow">›</span>
+    <div class="step">
+      <div class="step-dot" id="dot-q">4</div>
+      <span class="step-label" id="lbl-q">Answer the question</span>
+    </div>
+  </div>
+
+  <!-- ══ MC panel (locked until IR visited) ══ -->
+  <div class="mc-panel" id="mc-panel">
+    <div id="mc-locked-msg" class="mc-locked">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <span>Follow the steps above to unlock this question.</span>
+    </div>
+    <div id="mc-content" style="display:none;">
+      <p class="mc-q">Which answer correctly identifies the violation, tier, and enforcement action for this Image Review case?</p>
+      <div class="mc-opts">
+        <div class="mc-opt" tabindex="0" data-correct="true" onclick="pick(this)" onkeydown="if(event.key==='Enter')pick(this)">
+          <span class="radio"></span>
+          <div>
+            <div>Marijuana Exposure → Enforcement Criteria (Tier 2) → IR tab → delete image (Manual). TACK: Confirmed Violation | TOS Violation | Legally Questionable. Admin Action: None. Blocklist: No. No escalation.</div>
+            <div class="mc-reason">Correct. The definition and base tier live in Enforcement Criteria. The exact image action, admin action, blocklist status, and escalation live in the IR tab.</div>
+          </div>
+        </div>
+        <div class="mc-opt" tabindex="0" data-correct="false" onclick="pick(this)" onkeydown="if(event.key==='Enter')pick(this)">
+          <span class="radio"></span>
+          <div>
+            <div>Marijuana Exposure → IR tab → Tier 2 → delete image (Manual). TACK: Confirmed Violation | TOS Violation | Marijuana Exposure. Admin Action: None. Blocklist: No.</div>
+            <div class="mc-reason">Almost — but check the TACK picklist in the IR tab. The correct value is <em>Legally Questionable</em>, not "Marijuana Exposure." Marijuana Exposure sits under the Legally Questionable picklist category.</div>
+          </div>
+        </div>
+        <div class="mc-opt" tabindex="0" data-correct="false" onclick="pick(this)" onkeydown="if(event.key==='Enter')pick(this)">
+          <span class="radio"></span>
+          <div>
+            <div>Criminal Activity → IR tab → Tier 3 → delete image and delete account (Manual). Blocklist: Yes.</div>
+            <div class="mc-reason">Not quite. The correct violation is Marijuana Exposure, not Criminal Activity — cannabis images fall under their own specific policy. The tier is 2, not 3, and the action is image deletion only with no admin action or blocklist.</div>
+          </div>
+        </div>
+        <div class="mc-opt" tabindex="0" data-correct="false" onclick="pick(this)" onkeydown="if(event.key==='Enter')pick(this)">
+          <span class="radio"></span>
+          <div>
+            <div>Marijuana Exposure → IR tab → Tier 2 → hold image. TACK: Confirmed Violation | TOS Violation | Legally Questionable. Admin Action: None. Blocklist: No.</div>
+            <div class="mc-reason">Not quite. The image action for Marijuana Exposure in the IR tab is <em>Delete</em> (Manual), not Hold. Check the IR tab's Image column for Marijuana Exposure.</div>
+          </div>
+        </div>
+      </div>
+      <div class="mc-feedback correct" id="mc-fb-correct">
+        ✓ Correct.
+      </div>
+      <div class="mc-feedback wrong" id="mc-fb-wrong">
+        ✗ Not quite — review the feedback below your answer, then try again.
+        <button class="retry-btn" onclick="retry()">Try again</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ Done screen ══ -->
+  <div id="done-screen" style="display:none;">
+    <div class="donescreen">
+      <div class="doneicon">✓</div>
+      <h3>Complete</h3>
+      <p>Marijuana Exposure → Enforcement Criteria (Tier 2) → IR tab → delete image (Manual).<br>TACK: Confirmed Violation | TOS Violation | Legally Questionable. Admin Action: None. Blocklist: No. No escalation.</p>
+      <button class="replay-btn" onclick="replay()">Replay from the start</button>
+      <p style="margin-top:14px;font-size:13px;color:#9ca3af;">Ready to move on? Continue to the next drill in the course.</p>
+    </div>
+  </div>
+
+</div><!-- card -->
+</div><!-- outer -->
+
+<script>
+// Track which tabs have been visited
+const visited = {nav: false, ec: false, ir: false};
+
+function showTab(id) {
+  // Update tab buttons
+  ['nav','ec','ir'].forEach(t => {
+    const b = document.getElementById('tbtn-'+t);
+    b.classList.remove('active','ir-active');
+  });
+  document.getElementById('tbtn-'+id).classList.add('active');
+  if (id === 'ir') document.getElementById('tbtn-ir').classList.add('ir-active');
+
+  // Update panes
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+
+  // Mark visited
+  visited[id] = true;
+  updateProgress();
+
+  // Unlock MC when IR visited
+  if (id === 'ir') unlockMC();
+}
+
+function goToEC(anchor) {
+  showTab('ec');
+  const row = document.getElementById('ec-' + anchor);
+  if (row) {
+    // Show placeholder rows if needed
+    if (row.style.display === 'none') row.style.display = '';
+    const scroll = document.getElementById('ec-scroll');
+    // Wait a tick for display to update
+    setTimeout(() => {
+      row.scrollIntoView({behavior:'smooth', block:'center'});
+    }, 50);
+    // Flash highlight
+    row.style.background = '#fff9c4';
+    setTimeout(() => { row.style.background = ''; }, 1200);
+    document.getElementById('ec-cellref').textContent = 'A' + (row.rowIndex || '');
+  }
+}
+
+function goToIR(anchor) {
+  showTab('ir');
+  const row = document.getElementById('ir-' + anchor);
+  if (row) {
+    setTimeout(() => {
+      row.scrollIntoView({behavior:'smooth', block:'center'});
+    }, 50);
+    row.style.background = '#e8f5e9';
+    setTimeout(() => { row.style.background = ''; }, 1200);
+    document.getElementById('ir-cellref').textContent = 'A' + (row.rowIndex || '');
+  }
+}
+
+function updateProgress() {
+  const steps = [
+    {key:'nav', dot:'dot-nav', lbl:'lbl-nav'},
+    {key:'ec', dot:'dot-ec', lbl:'lbl-ec'},
+    {key:'ir', dot:'dot-ir', lbl:'lbl-ir'},
+  ];
+  const allVisited = steps.every(s => visited[s.key]);
+  steps.forEach(s => {
+    const dot = document.getElementById(s.dot);
+    const lbl = document.getElementById(s.lbl);
+    dot.classList.remove('active','done');
+    lbl.classList.remove('active','done');
+    if (visited[s.key]) { dot.classList.add('done'); lbl.classList.add('done'); }
+  });
+  // Question step
+  const qdot = document.getElementById('dot-q');
+  const qlbl = document.getElementById('lbl-q');
+  if (allVisited) { qdot.classList.add('active'); qlbl.classList.add('active'); }
+}
+
+function unlockMC() {
+  document.getElementById('mc-locked-msg').style.display = 'none';
+  document.getElementById('mc-content').style.display = 'block';
+}
+
+function pick(el) {
+  if (el.classList.contains('locked')) return;
+  const correct = el.dataset.correct === 'true';
+  const reason = el.querySelector('.mc-reason');
+  if (correct) {
+    document.querySelectorAll('.mc-opt').forEach(o => o.classList.add('locked'));
+    el.classList.add('selected-correct');
+    if (reason) reason.style.display = 'block';
+    document.getElementById('mc-fb-correct').style.display = 'block';
+    document.getElementById('mc-fb-wrong').style.display = 'none';
+    // Mark question step done
+    document.getElementById('dot-q').classList.remove('active');
+    document.getElementById('dot-q').classList.add('done');
+    document.getElementById('lbl-q').classList.remove('active');
+    document.getElementById('lbl-q').classList.add('done');
+    // Show done screen after pause
+    setTimeout(() => {
+      document.getElementById('mc-panel').style.display = 'none';
+      document.getElementById('done-screen').style.display = 'block';
+      document.getElementById('done-screen').scrollIntoView({behavior:'smooth'});
+    }, 4000);
+  } else {
+    el.classList.add('selected-wrong','locked');
+    if (reason) reason.style.display = 'block';
+    document.getElementById('mc-fb-wrong').style.display = 'block';
+    document.getElementById('mc-fb-correct').style.display = 'none';
+  }
+}
+
+function retry() {
+  document.querySelectorAll('.mc-opt').forEach(o => {
+    o.classList.remove('selected-correct','selected-wrong','locked');
+    const r = o.querySelector('.mc-reason');
+    if (r) r.style.display = 'none';
+  });
+  document.getElementById('mc-fb-correct').style.display = 'none';
+  document.getElementById('mc-fb-wrong').style.display = 'none';
+}
+
+function replay() {
+  // Reset visited
+  visited.nav = false; visited.ec = false; visited.ir = false;
+  // Reset MC
+  retry();
+  document.getElementById('mc-locked-msg').style.display = 'flex';
+  document.getElementById('mc-content').style.display = 'none';
+  document.getElementById('mc-panel').style.display = 'block';
+  document.getElementById('done-screen').style.display = 'none';
+  // Reset progress dots
+  ['dot-nav','dot-ec','dot-ir','dot-q'].forEach(id => {
+    document.getElementById(id).classList.remove('active','done');
+  });
+  ['lbl-nav','lbl-ec','lbl-ir','lbl-q'].forEach(id => {
+    document.getElementById(id).classList.remove('active','done');
+  });
+  // Go back to nav tab
+  showTab('nav');
+  visited.nav = false; // showTab sets it, reset again
+  updateProgress();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// Init
+showTab('nav');
+visited.nav = false;
+updateProgress();
+</script>
+</body>
+</html>
