@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notable Enforcement Updates</title>
+<style>
+  :root {
+    --bg:#04243a; --text-light:#d6e9fb; --text-muted:#9db9d6;
+    --radius:14px;
+    --old-bg:rgba(255,255,255,0.05); --old-text:#c8d6e6; --old-border:rgba(255,255,255,0.14);
+    --new-bg:#CCE1FF; --new-text:#042C53; --new-accent:#005199;
+    --rail-bg:rgba(255,255,255,0.04); --rail-active:#005199; --rail-done:#0074AD;
+    --crit:#FFB080; --crit-bg:#005199;
+    --crit-bar:#FFA5AF;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--text-light); -webkit-font-smoothing:antialiased;
+    padding:2.5rem 2rem;
+  }
+  .wrap{max-width:1060px; margin:0 auto;}
+  h1{font-size:2.6rem; font-weight:600; line-height:1.1; margin:0 0 .5rem; color:#B2E8FF;}
+  .lede{font-size:1.22rem; line-height:1.75; color:var(--text-muted); margin:0 0 1rem; max-width:760px;}
+  .lede:last-of-type{margin-bottom:1.75rem;}
+
+  .layout{display:grid; grid-template-columns:260px 1fr; gap:22px; align-items:start;}
+
+  .rail{background:var(--rail-bg); border:1px solid rgba(255,255,255,0.08); border-radius:var(--radius); padding:8px; max-height:600px; overflow-y:auto;}
+  .rail button{
+    display:flex; align-items:center; gap:10px; width:100%; text-align:left;
+    background:transparent; border:none; color:var(--text-muted);
+    font-family:inherit; font-size:1.0rem; line-height:1.3; padding:10px 12px;
+    border-radius:9px; cursor:pointer; transition:background .12s,color .12s;
+  }
+  .rail button:hover{background:rgba(255,255,255,0.06); color:var(--text-light);}
+  .rail button.active{background:var(--rail-active); color:#fff; font-weight:600;}
+  .rail .num{flex:none; width:24px; height:24px; border-radius:50%; background:rgba(255,255,255,0.12); color:var(--text-light); display:flex; align-items:center; justify-content:center; font-size:.85rem; font-weight:600;}
+  .rail button.active .num{background:#fff; color:var(--rail-active);}
+  .rail button.done .num{background:var(--rail-done); color:#fff;}
+  .rail .label{flex:1;}
+  .rail .dot{flex:none; width:9px; height:9px; border-radius:50%; background:var(--crit);}
+  .rail-legend{display:flex; align-items:center; gap:8px; font-size:.92rem; color:var(--text-muted); margin:10px 4px 0;}
+  .rail-legend .dot{width:9px; height:9px; border-radius:50%; background:var(--crit);}
+
+  .panelwrap{min-height:520px; display:flex; flex-direction:column;}
+  .card{background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:var(--radius); padding:24px 26px; flex:1;}
+  .eyebrow{display:flex; align-items:center; gap:10px; font-size:1rem; color:var(--text-muted); margin-bottom:8px; flex-wrap:wrap;}
+  .badge{font-size:.85rem; font-weight:600; letter-spacing:.03em; text-transform:uppercase; color:var(--crit); background:var(--crit-bg); padding:3px 10px; border-radius:20px;}
+  .card h2{font-size:1.85rem; font-weight:600; line-height:1.15; margin:0 0 18px; color:#B2E8FF;}
+
+  .panel{border-radius:10px; padding:18px 20px; margin-bottom:14px;}
+  .panel .tag{display:inline-block; font-size:.95rem; font-weight:600; letter-spacing:.04em; text-transform:uppercase; margin-bottom:10px;}
+  .panel p{margin:0; font-size:1.18rem; line-height:1.6;}
+  .old{background:var(--old-bg); border:1px solid var(--old-border);}
+  .old .tag{color:var(--old-text);} .old p{color:var(--old-text);}
+  .new{background:var(--new-bg); border-left:5px solid var(--new-accent);}
+  .new .tag{color:var(--new-accent);} .new p{color:var(--new-text);}
+  .new.crit{border-left-color:var(--crit-bar);}
+  .new.crit .tag{color:var(--crit-bar);}
+  .new.flash{animation:flash .8s ease;}
+  @keyframes flash{0%{box-shadow:0 0 0 0 rgba(121,210,242,0);} 35%{box-shadow:0 0 0 4px rgba(121,210,242,.55);} 100%{box-shadow:0 0 0 0 rgba(121,210,242,0);}}
+  .new.crit.flash{animation:flashcrit .8s ease;}
+  @keyframes flashcrit{0%{box-shadow:0 0 0 0 rgba(255,165,128,0);} 35%{box-shadow:0 0 0 4px rgba(255,165,128,.6);} 100%{box-shadow:0 0 0 0 rgba(255,165,128,0);}}
+
+  .predict{margin:4px 0 14px;}
+  .predict .polltag{display:inline-flex; align-items:center; gap:7px; font-size:.9rem; font-weight:600; letter-spacing:.03em; text-transform:uppercase; color:#79D2F2; margin-bottom:10px;}
+  .predict .q{font-size:1.12rem; color:var(--text-light); margin:0 0 12px; font-weight:600;}
+  .choices{display:flex; flex-wrap:wrap; gap:10px;}
+  .choices button{
+    font-family:inherit; font-size:1.05rem; font-weight:500; color:var(--text-light);
+    background:rgba(255,255,255,0.05); border:1.5px solid rgba(255,255,255,0.25);
+    padding:11px 18px; border-radius:10px; cursor:pointer; transition:all .12s;
+  }
+  .choices button:hover{border-color:#79D2F2; background:rgba(121,210,242,0.12);}
+  .choices button.picked{border-color:#79D2F2; background:#79D2F2; color:#04243a; font-weight:600;}
+  .choices button.faded{opacity:.4;}
+  .reveal-hint{font-size:1.0rem; color:var(--text-muted); margin:12px 0 0; font-style:italic;}
+  .your-guess{font-size:.95rem; color:var(--text-muted); margin:12px 0 0;}
+  .your-guess b{color:#79D2F2; font-weight:600;}
+  .reveal-lead{font-size:1.05rem; font-weight:600; color:var(--text-light); margin:0 0 10px;}
+
+  .reveal{animation:fade .25s ease;}
+  @keyframes fade{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;}}
+
+  .nav{display:flex; align-items:center; justify-content:space-between; margin-top:18px;}
+  .count{font-size:1.05rem; color:var(--text-muted);}
+  .btns{display:flex; gap:12px;}
+  button.step{font-family:inherit; font-size:1.1rem; font-weight:600; padding:11px 24px; border-radius:10px; cursor:pointer; border:none; display:inline-flex; align-items:center; gap:8px; transition:transform .1s,opacity .15s;}
+  button.step:active{transform:scale(.97);}
+  button.step:disabled{opacity:.3; cursor:not-allowed;}
+  .btn-back{background:transparent; color:#fff; border:1.5px solid rgba(255,255,255,0.4);}
+  .btn-next{background:#79D2F2; color:#04243a;}
+
+  @media (max-width:820px){
+    h1{font-size:2.1rem;}
+    .layout{grid-template-columns:1fr;}
+    .rail{max-height:none; display:flex; flex-wrap:wrap; gap:6px;}
+    .rail button{width:auto;}
+    .rail .label{display:none;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Notable Enforcement Updates</h1>
+  <p class="lede">Most of the EG is your existing policy in a new home &mdash; a handful of things genuinely changed how you enforce.</p>
+
+  <p class="lede">A few of these are <b style="color:var(--crit);">Tier 4+</b>, the highest-stakes changes that require escalating to the manager on duty and Critical Escalations. Those are marked below.</p>
+
+  <p class="lede">On the changes where the old habit is easiest to slip back into, you'll get a quick gut-check first: tap what your instinct says, then see what actually changed.</p>
+
+  <div class="layout">
+    <div class="railwrap">
+      <nav class="rail" id="rail" aria-label="Notable changes"></nav>
+      <p class="rail-legend"><span class="dot" aria-hidden="true"></span> Tier 4+ &mdash; critical escalation</p>
+    </div>
+    <div class="panelwrap">
+      <div class="card" id="card"></div>
+      <div class="nav">
+        <span class="count" id="count"></span>
+        <div class="btns">
+          <button class="step btn-back" id="back">&larr;&nbsp;Back</button>
+          <button class="step btn-next" id="next">Next&nbsp;&rarr;</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// predict: true = high-stakes, show prediction step before reveal
+// crit: true = Tier 4+ / critical-escalation change (flagged in rail + badge)
+const changes = [
+  { crit:true, predict:true, title:"Inappropriate Content Involving Minors",
+    old:"Some KAs described this policy as including harassment or profanity directed towards minors. Additionally, only sexual images of minors were covered in our previous policy description.",
+    new:"Our definition no longer includes concepts related to harassment or profanity towards minors, but does more comprehensively cover the scope of sexually suggestive content and sexual solicitations involving minors, including violations that are entirely text-based. Reminder: Relevant accounts should be deleted, but the content should not be deleted. This allows Critical Escalations to appropriately handle and investigate these cases.",
+    q:"What do you think changed about what this policy covers and how you action it?",
+    choices:["Scope narrowed; delete content","Scope broadened to text-based; delete the account, not the content","No change to scope; now Tier 1"] },
+  { crit:true, predict:true, title:"Mercenary Services / Harmful Services",
+    old:"Our KAs have passing references to \u2018Mercenary Services,\u2019 which are categorized as \u2018Legally Questionable,\u2019 but are not well-documented.",
+    new:"The concept of \u2018Mercenary Services\u2019 has been moved under the User Safety Policy and renamed to \u2018Harmful Services.\u2019 This enforcement constitutes a Tier 4+ violation, requires escalation to the manager on duty, and is a critical escalation.",
+    q:"What do you think changed about how this violation is handled?",
+    choices:["Renamed Harmful Services; Tier 4+, critical escalation","Stays Legally Questionable; no escalation","Removed as a violation"] },
+  { crit:true, predict:true, title:"Unwanted Contact Without a Business Purpose",
+    old:"Our documentation referenced unwanted contact without a business purpose as a critical escalation, but it lacked a definition for this behavior or a categorization for it.",
+    new:"A violation category for unwanted contact (i.e., stalking) has been created, along with identifying criteria and examples. This will be considered a Tier 4+ violation and will involve an escalation to the manager on duty and Critical Escalations.",
+    q:"What do you think is new for this behavior?",
+    choices:["Now has a definition and criteria; Tier 4+, escalate","Still undefined, handled case-by-case","Downgraded to a content deletion"] },
+  { crit:false, predict:true, title:"Nudity & Sexual Content Categorization",
+    old:"Our categorization of infractions related to nudity and sexual content was sometimes circular, with Specialists being instructed to identify content as one violation, but enforce it as another.",
+    new:"Our categorization of sexual and sexually suggestive content has been streamlined. Specialists will now always enforce content under the violation it is identified as (i.e., Partial Nudity is always enforced as Partial Nudity). User messaging has been adjusted to include account deletions for \u2018Explicit Nudity\u2019 and \u2018Overtly Suggestive Content.\u2019",
+    q:"What do you think changed about how you enforce nudity/sexual content?",
+    choices:["Enforce it as whatever you identify it as","Identify as one violation, enforce as another","Always enforce as Explicit Nudity"] },
+  { crit:false, predict:true, title:"Discrimination Categorization",
+    old:"The categorization of our discrimination-related violations was inconsistent between queues and did not reflect much of the nuance of our actual Non-Discrimination Policy.",
+    new:"Our categorization of discrimination violations has been made consistent between queues and more consistent with Incident Operations. Low-severity stereotypes and offensive language will result in a deletion of the offending content, while obvious hateful conduct and hiring/payment discrimination will result in account deletions.",
+    q:"What do you think changed about how discrimination violations are split?",
+    choices:["Everything is an account deletion","Low-severity = content deletion; hateful conduct & hiring discrimination = account deletion","Everything is a content deletion"] },
+  { crit:false, predict:true, title:"Inappropriate Content/Language",
+    old:"Old guidelines were vague, referring only to concepts of differences between derogatory language/harassment (account deletion) and offensive language (content deletion).",
+    new:"Threatening language, telling others to kill themselves, or repeated/severe insults will result in an account deletion. The standard for \u201Crepeated or severe\u201D is left to the specialist's discretion. Profanity will result in a content deletion, but only if it\u2019s used as an insult or in an offensive manner. Profanity directed towards the quality of the work or price is an explicit exception.",
+    q:"What do you think happens to profanity about the work or price?",
+    choices:["Account deletion","Content deletion","It's an explicit exception \u2014 not actioned"] },
+  { crit:false, predict:true, title:"Minor Users",
+    old:"Our KAs explicitly conflicted regarding whether implying that a user is a minor constitutes a policy violation.",
+    new:"Our definitions of accounts controlled by minors have been clarified and adjusted. An additional violation for implicit minors has been added, with instructions to enter the user into the ID Help flow.",
+    q:"What do you think is new for users who imply they're a minor?",
+    choices:["A new implicit-minor violation; enter the ID Help flow","Still not a violation","Immediate account deletion"] },
+  { crit:false, predict:true, title:"Not a Thumbtack Service",
+    old:"Massage category violations were handled completely differently from all other Not a Thumbtack Service violations.",
+    new:"All exceptions for massage services have been removed. Offering massage services will now be acted on in the same way as any other prohibited service category.",
+    q:"What do you think changed about how massage services are handled?",
+    choices:["Same as any other prohibited service","Still a special exception","Now allowed on the platform"] },
+  { crit:false, predict:true, title:"Questionable Names",
+    old:"Names that contained \u201CXXX\u201D were deleted under the Sexual Content policy, which created inconsistency because names like \u201CJohn XXXX\u201D were supposed to be identified as Questionable Names instead.",
+    new:"The questionable names policy has been adjusted so that names containing \u201CXXX\u201D will have their requests deleted under this policy, rather than having the accounts deleted under the sexual content policy. This will make our policy easier to enforce operationally.",
+    q:"What do you think changed for names containing \u201CXXX\u201D?",
+    choices:["Request deleted under Questionable Names","Account deleted under Sexual Content","No longer actioned"] },
+  { crit:false, predict:false, title:"General",
+    old:"Some specific KAs referenced a tiering system (primarily categorization and profile review), but others either had no tiering definitions or had alternate tiering definitions.",
+    new:"Base violation tiers for all our enforcement actions have been defined, and our tiering system has been aligned across all relevant queues." },
+  { crit:false, predict:false, title:"Incidental Sexual Requests",
+    old:"Our TOS Violation Overview referenced the concept of an incidental sexual request, but no other KA mentioned this concept.",
+    new:"A consistent definition has been created for requests that may involve nudity or sexual content in situations where the requester\u2019s intent is obviously not sexual. These requests will be deleted without further action." },
+  { crit:false, predict:false, title:"Boudoir Exceptions",
+    old:"Our exceptions for nudity in photography were inconsistent, with KAs providing different instructions and categorizations for violations.",
+    new:"Exclusions for boudoir content have been clarified. It is now more apparent that requests for nudity in photography are only allowed under boudoir content. Boudoir photography categories can also contain images with partial nudity or overtly suggestive content, but may not contain nudity or sexual content. Requests involving minors in the boudoir category should be deleted with no further action if it\u2019s clear that the request was a good-faith mistake." },
+  { crit:false, predict:false, title:"Legally Questionable Categorization",
+    old:"We had one large bucket of \u201Clegally questionable\u201D violations with few definitions or examples.",
+    new:"The categorization of our \u2018Legally Questionable\u2019 violations has been divided into several separate enforcement categories for clarity. Each of these enforcements has its own identifying criteria and examples." },
+  { crit:false, predict:false, title:"Competitor Contact Abuse",
+    old:"Our KAs explicitly conflicted regarding whether a deleted service category should be considered relevant for Competitor Contact Abuse. Additionally, users requesting their own services to leave a positive review is currently noted under Competitor Contact Abuse, despite the fact that it\u2019s contextually different than the other criteria.",
+    new:"The policy has been adjusted so that, if a user\u2019s service category is deleted or disabled, requests in the same category will no longer be counted as competitor contact abuse. We plan to monitor the impact of this change over time, as there is the potential that pros may attempt to game it. Additionally, users requesting their own services to leave a positive review are now handled exclusively under the Fake Reviews guidelines." },
+  { crit:false, predict:false, title:"LACUA / Blocklist Hits",
+    old:"LACUA had its own tiering system, which was independent of, and conflicted with, categorization tiering.",
+    new:"The LACUA tiering system has been removed." },
+  { crit:false, predict:false, title:"Competitor Services",
+    old:"Inclusions of competitors in Service Profiles were instructed to be redacted, but if redaction wasn\u2019t possible, Specialists were told to delete the entire pro account.",
+    new:"This violation has been revised to a service profile deletion if redaction is not possible. This matches the other profile violations that are considered for redaction." },
+  { crit:false, predict:false, title:"Test / Not a Service Categorization",
+    old:"Our existing KAs had significant overlap between the 'Test' and 'Not a Service' categories.",
+    new:"The \u2018Test\u2019 category has been removed. For customers, this concept has been reworked into a \u2018Contact Without Intent to Hire\u2019 violation, while the pro component has been added to a \u2018Gibberish Profiles\u2019 violation. \u2018Not a Service\u2019 now exclusively covers profiles that offer something that is not a service (e.g., a digital or physical good)." },
+  { crit:false, predict:false, title:"Not a Service / Not a Thumbtack Service / Seeking Employment / Inappropriate Content",
+    old:"Our existing KAs had significant overlap between the \u2018Not a Service,\u2019 \u2018Not a Thumbtack Service,\u2019 \u2018Seeking Employment,\u2019 and \u2018Inappropriate Content\u2019 categories.",
+    new:"Attempts to acquire employment, partnership, etc. will exclusively fall under \u2018Seeking Employment or Partnership.\u2019 Massage violations will be considered under 'Not a Thumbtack Service' instead of 'Inappropriate Content'." }
+];
+
+let i = 0;
+const picked = new Array(changes.length).fill(null); // stores chosen index for predict cards; null = not yet answered
+const seen = new Array(changes.length).fill(false);   // visited at least once
+const rail = document.getElementById("rail");
+const card = document.getElementById("card");
+const back = document.getElementById("back");
+const next = document.getElementById("next");
+const count = document.getElementById("count");
+
+changes.forEach((c,idx)=>{
+  const b = document.createElement("button");
+  b.innerHTML = `<span class="num">${idx+1}</span><span class="label">${c.title}</span>${c.crit?'<span class="dot" title="Tier 4+"></span>':''}`;
+  b.addEventListener("click",()=>{ i=idx; render(); });
+  rail.appendChild(b);
+});
+
+function oldPanel(c){
+  return `<div class="panel old"><span class="tag">Previous</span><p>${c.old}</p></div>`;
+}
+function newPanel(c, flash){
+  const cls = ["panel","new","reveal"];
+  if (c.crit) cls.push("crit");
+  if (flash) cls.push("flash");
+  return `<div class="${cls.join(" ")}"><span class="tag">New</span><p>${c.new}</p></div>`;
+}
+
+function renderComplete(){
+  card.innerHTML = `
+    <div class="eyebrow">All caught up</div>
+    <h2>That's every notable change</h2>
+    <div class="panel new" style="border-top:none;">
+      <p style="margin:0 0 10px;">You've seen all ${changes.length} updates. The three marked <b>Tier 4+</b> &mdash; Inappropriate Content Involving Minors, Harmful Services, and Unwanted Contact Without a Business Purpose &mdash; are the ones to keep top of mind, since missing the escalation has the biggest impact.</p>
+      <p style="margin:0;">When you're ready, you'll get to try these out on real case scenarios &mdash; the same kind you'll see on the floor.</p>
+    </div>`;
+  [...rail.children].forEach(b=>b.classList.remove("active"));
+  count.textContent = `${changes.length} / ${changes.length} \u00b7 complete`;
+  back.disabled = false;
+  next.disabled = true;
+}
+
+function render(){
+  if (i >= changes.length) { renderComplete(); return; }
+  const c = changes[i];
+  seen[i] = true;
+
+  let body = `
+    <div class="eyebrow">Change ${i+1} of ${changes.length}${c.crit?'<span class="badge">Tier 4+</span>':''}</div>
+    <h2>${c.title}</h2>
+    ${oldPanel(c)}`;
+
+  const answered = picked[i] !== null;
+
+  if (c.predict && !answered) {
+    body += `
+      <div class="predict">
+        <span class="polltag">&#9678;&nbsp;Quick gut-check &middot; no right answer</span>
+        <p class="q">${c.q}</p>
+        <div class="choices" id="choices">
+          ${c.choices.map((ch,ci)=>`<button data-ci="${ci}">${ch}</button>`).join("")}
+        </div>
+        <p class="reveal-hint">Tap whichever your instinct says &mdash; then we'll show what actually changed.</p>
+      </div>`;
+  } else if (c.predict && answered) {
+    body += `
+      <div class="predict">
+        <span class="polltag">&#9678;&nbsp;Your gut-check</span>
+        <p class="q">${c.q}</p>
+        <div class="choices">
+          ${c.choices.map((ch,ci)=>`<button class="${ci===picked[i]?'picked':'faded'}" disabled>${ch}</button>`).join("")}
+        </div>
+      </div>
+      <p class="reveal-lead">Here's what actually changed:</p>
+      ${newPanel(c)}`;
+  } else {
+    body += newPanel(c);
+  }
+
+  card.innerHTML = body;
+
+  if (c.predict && !answered) {
+    const btns = [...card.querySelectorAll(".choices button")];
+    btns.forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        const ci = parseInt(btn.dataset.ci, 10);
+        const pickedText = btn.textContent;
+        picked[i] = ci;
+        btn.classList.add("picked");
+        btns.forEach(b=>{ b.disabled=true; if(b!==btn) b.classList.add("faded"); });
+        const predictBlock = card.querySelector(".predict");
+        const hint = card.querySelector(".reveal-hint");
+        if(hint) hint.remove();
+        predictBlock.insertAdjacentHTML("beforeend", `<p class="your-guess">Your gut-check: <b>${pickedText}</b></p>`);
+        setTimeout(()=>{
+          predictBlock.insertAdjacentHTML("afterend",
+            `<p class="reveal-lead reveal">Here's what actually changed:</p>` + newPanel(c, true));
+        }, 180);
+      });
+    });
+  }
+
+  [...rail.children].forEach((b,idx)=>{
+    const isActive = idx===i;
+    b.classList.toggle("active", isActive);
+    b.classList.toggle("done", !isActive && seen[idx]);
+  });
+  count.textContent = `${i+1} / ${changes.length}`;
+  back.disabled = i===0;
+  next.disabled = false;
+  if (rail.children[i]) rail.children[i].scrollIntoView({block:"nearest"});
+}
+back.addEventListener("click",()=>{ if(i>0){i--;render();} });
+next.addEventListener("click",()=>{ if(i<changes.length){i++;render();} });
+document.addEventListener("keydown",e=>{
+  if(e.target.tagName==="BUTTON" && e.target.closest(".choices")) return;
+  if(e.key==="ArrowRight"&&i<changes.length){i++;render();}
+  if(e.key==="ArrowLeft"&&i>0){i--;render();}
+});
+render();
+</script>
+</body>
+</html>
