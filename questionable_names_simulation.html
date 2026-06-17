@@ -209,7 +209,7 @@
   <div class="lh">
     <span class="eyebrow">Apply the Change &middot; Simulation</span>
     <h1>Work the case: a questionable name in Contact Verification</h1>
-    <p>You're verifying a syndicated request in the CV queue. The customer's registered name isn't a real name &mdash; it's their email address.</p>
+    <p>A request has come into the CV queue for review. The customer's registered name isn't a real name &mdash; it's their email address.</p>
     <p>Read the case, look the violation up in the Enforcement Guide, then take the action the EG calls for: delete the request and log the outcome.</p>
     <p style="font-size:.92rem; margin-top:.4rem;"><b>Note:</b> Names that are email addresses, social handles, or URLs &mdash; and names containing &ldquo;XXX&rdquo; &mdash; all now fall under <b>Questionable Names</b>.</p>
   </div>
@@ -485,10 +485,9 @@
           </div>
 
           <div class="fgroup" id="fg-account">
-            <label for="f-account">Admin Actions &middot; Account Actions <span class="req-star">*</span></label>
+            <label for="f-account">Admin Actions &middot; Account Actions</label>
             <select id="f-account">
-              <option value="">Select…</option>
-              <option value="none">No Action</option>
+              <option value="none" selected>No Action</option>
               <option value="hold">Hold</option>
               <option value="ghost">Ghost</option>
               <option value="delete">Delete</option>
@@ -722,12 +721,11 @@ function checkAction(){
   const fb=document.getElementById("actionFb");
   ["fg-outcome","fg-detail","fg-tos","fg-account","fg-notes"].forEach(id=>document.getElementById(id).classList.remove("bad"));
 
-  if(!o || !a || !chosenVal || !notesVal.trim()){
+  if(!o || !chosenVal || !notesVal.trim()){
     fb.className="fb no show";
-    fb.innerHTML="Complete the required fields (Outcome, TOS Violations, Account Actions, and Internal Notes) before saving.";
+    fb.innerHTML="Complete the required fields (Outcome, TOS Violations, and Internal Notes) before saving.";
     if(!o) document.getElementById("fg-outcome").classList.add("bad");
     if(!chosenVal) document.getElementById("fg-tos").classList.add("bad");
-    if(!a) document.getElementById("fg-account").classList.add("bad");
     if(!notesVal.trim()) document.getElementById("fg-notes").classList.add("bad");
     return;
   }
