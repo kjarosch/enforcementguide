@@ -108,7 +108,7 @@
   <h1>Notable Enforcement Updates</h1>
   <p class="lede">Most of the EG is your existing policy in a new home &mdash; a handful of things genuinely changed how you enforce.</p>
 
-  <p class="lede">A few of these are <b style="color:var(--crit);">Tier 4+</b>, the highest-stakes changes that require escalating to the manager on duty and Critical Escalations. Those are marked below.</p>
+  <p class="lede">A few of these are <b style="color:var(--crit);">Tier 4+</b>, the highest-stakes changes that require escalating to SME/Manager and Critical Escalations. Those are marked below.</p>
 
   <p class="lede">On the changes where the old habit is easiest to slip back into, you'll get a quick gut-check first: tap what your instinct says, then see what actually changed.</p>
 
@@ -141,12 +141,12 @@ const changes = [
     choices:["Scope narrowed; delete content","Scope broadened to text-based; delete the account, not the content","No change to scope; now Tier 1"] },
   { crit:true, predict:true, title:"Mercenary Services / Harmful Services",
     old:"Our KAs have passing references to \u2018Mercenary Services,\u2019 which are categorized as \u2018Legally Questionable,\u2019 but are not well-documented.",
-    new:"The concept of \u2018Mercenary Services\u2019 has been moved under the User Safety Policy and renamed to \u2018Harmful Services.\u2019 This enforcement constitutes a Tier 4+ violation, requires escalation to the manager on duty, and is a critical escalation.",
+    new:"The concept of \u2018Mercenary Services\u2019 has been moved under the User Safety Policy and renamed to \u2018Harmful Services.\u2019 This enforcement constitutes a Tier 4+ violation, requires escalation to SME/Manager, and is a critical escalation.",
     q:"What do you think changed about how this violation is handled?",
     choices:["Renamed Harmful Services; Tier 4+, critical escalation","Stays Legally Questionable; no escalation","Removed as a violation"] },
   { crit:true, predict:true, title:"Unwanted Contact Without a Business Purpose",
     old:"Our documentation referenced unwanted contact without a business purpose as a critical escalation, but it lacked a definition for this behavior or a categorization for it.",
-    new:"A violation category for unwanted contact (i.e., stalking) has been created, along with identifying criteria and examples. This will be considered a Tier 4+ violation and will involve an escalation to the manager on duty and Critical Escalations.",
+    new:"A violation category for unwanted contact (i.e., stalking) has been created, along with identifying criteria and examples. This will be considered a Tier 4+ violation and will involve an escalation to SME/Manager and Critical Escalations.",
     q:"What do you think is new for this behavior?",
     choices:["Now has a definition and criteria; Tier 4+, escalate","Still undefined, handled case-by-case","Downgraded to a content deletion"] },
   { crit:false, predict:true, title:"Nudity & Sexual Content Categorization",
@@ -199,7 +199,7 @@ const changes = [
     new:"The LACUA tiering system has been removed." },
   { crit:false, predict:false, title:"Competitor Services",
     old:"Inclusions of competitors in Service Profiles were instructed to be redacted, but if redaction wasn\u2019t possible, Specialists were told to delete the entire pro account.",
-    new:"This violation has been revised to a service profile deletion if redaction is not possible. This matches the other profile violations that are considered for redaction." },
+    new:"If redaction isn\u2019t possible, delete the service profile, delete the account, and blocklist. This now matches the redaction-eligible pattern used by Contact Avoidance and other similar categories \u2014 rather than being a one-off \u201Caccount-only\u201D outcome." },
   { crit:false, predict:false, title:"Test / Not a Service Categorization",
     old:"Our existing KAs had significant overlap between the 'Test' and 'Not a Service' categories.",
     new:"The \u2018Test\u2019 category has been removed. For customers, this concept has been reworked into a \u2018Contact Without Intent to Hire\u2019 violation, while the pro component has been added to a \u2018Gibberish Profiles\u2019 violation. \u2018Not a Service\u2019 now exclusively covers profiles that offer something that is not a service (e.g., a digital or physical good)." },
